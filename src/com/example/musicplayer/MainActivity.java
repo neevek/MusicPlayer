@@ -295,19 +295,10 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_play_prev_song: {
-                final Song currentSong = mMusicPlayerService.getCurrentSong();
-                List<Song> songList = mApp.getCachedAllMusicSongList(false);
-                if (songList != null) {
-                    playPrevSong(currentSong, songList);
-                } else {
-                    TaskExecutor.executeTask(new Runnable() {
-                        @Override
-                        public void run() {
-                            List<Song> songList = mApp.getCachedAllMusicSongList(true);
-                            playPrevSong(currentSong, songList);
-                        }
-                    });
-                }
+                if (mMusicPlayerService.getCurrentSong() != null)
+                    mMusicPlayerService.playPrevSong();
+                else
+                    tryPlayingLastSong();
                 break;
             }
             case R.id.btn_play_and_pause:
@@ -319,31 +310,34 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                             .commit();
                 } else {
                     if (mMusicPlayerService.getCurrentSong() == null) {
-                        final int lastPlayedSongId = mPrefs.getInt(MusicPlayerApplication.PREF_KEY_LAST_PLAYED_SONG_ID, 0);
-                        if (lastPlayedSongId > 0) {
-                            mApp.startPlayingSong(lastPlayedSongId, mPrefs.getInt(MusicPlayerApplication.PREF_KEY_LAST_PLAYED_SONG_PROGRESS, 0));
-                        }
+                        tryPlayingLastSong();
                     } else {
                         mMusicPlayerService.resumePlayback();
                     }
                 }
                 break;
             case R.id.btn_play_next_song: {
-                final Song currentSong = mMusicPlayerService.getCurrentSong();
-                List<Song> songList = mApp.getCachedAllMusicSongList(false);
-                if (songList != null) {
-                    playNextSong(currentSong, songList);
-                } else {
-                    TaskExecutor.executeTask(new Runnable() {
-                        @Override
-                        public void run() {
-                            List<Song> songList = mApp.getCachedAllMusicSongList(true);
-                            playNextSong(currentSong, songList);
-                        }
-                    });
-                }
+                if (mMusicPlayerService.getCurrentSong() != null)
+                    mMusicPlayerService.playNextSong();
+                else
+                    tryPlayingLastSong();
                 break;
             }
+        }
+    }
+
+    private void tryPlayingLastSong () {
+        final int lastPlayedSongId = mPrefs.getInt(MusicPlayerApplication.PREF_KEY_LAST_PLAYED_SONG_ID, 0);
+        if (lastPlayedSongId > 0) {
+            TaskExecutor.executeTask(new Runnable() {
+                @Override
+                public void run() {
+                    // initialize the play list
+                    mApp.setCurrentPlayList(mApp.getCachedAllMusicSongList(true));
+                }
+            });
+
+            mApp.startPlayingSong(lastPlayedSongId, mPrefs.getInt(MusicPlayerApplication.PREF_KEY_LAST_PLAYED_SONG_PROGRESS, 0));
         }
     }
 

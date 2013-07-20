@@ -67,6 +67,8 @@ public class MusicListFragment extends Fragment implements AdapterView.OnItemCli
                         break;
                 }
 
+                mApp.setCurrentPlayList(songList);
+
                 final List<Song> finalSongList = songList;
                 getActivity().runOnUiThread(new Runnable() {
                     @Override

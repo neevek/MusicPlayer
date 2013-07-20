@@ -30,6 +30,7 @@ public class MusicPlayerApplication extends Application {
     public final static String PREF_KEY_LAST_PLAYED_SONG_PROGRESS = "last_played_song_progress";
 
     private List<Song> mCachedSongList;
+    private List<Song> mCurrentPlayList;
 
     @Override
     public void onCreate() {
@@ -60,6 +61,13 @@ public class MusicPlayerApplication extends Application {
         return mMessagePump;
     }
 
+    public void setCurrentPlayList (List<Song> songList) {
+        mCurrentPlayList = songList;
+    }
+
+    public List<Song> getCurrentPlayList () {
+        return mCurrentPlayList;
+    }
 
     private final static Object INIT_CACHED_SONG_LIST_SYNC = new Object();
     public List<Song> getCachedAllMusicSongList(boolean init) {

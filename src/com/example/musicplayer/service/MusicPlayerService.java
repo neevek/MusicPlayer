@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.IBinder;
-import android.os.SystemClock;
 import android.util.Log;
 import android.widget.Toast;
 import com.example.musicplayer.MusicPlayerApplication;
@@ -15,6 +14,8 @@ import com.example.musicplayer.message.Message;
 import com.example.musicplayer.message.MessagePump;
 import com.example.musicplayer.pojo.Song;
 import com.example.musicplayer.sync.TaskQueue;
+
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -36,6 +37,8 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
     private PlayingProgressNotifier mPlayingProgressNotifier;
 
     private MusicPlayerDAO mMusicPlayerDAO;
+
+    private List<Song> mPlayList;
 
     @Override
     public void onCreate() {
@@ -79,28 +82,32 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
                 if (song == null)
                     return;
 
-                if (DEBUG) Log.d(TAG, ">>>> start playing: " + song.title);
-                try {
-                    if (mMediaPlayer.isPlaying()) {
-                        mMediaPlayer.stop();
-                    }
-
-                    mMediaPlayer.reset();
-                    mMediaPlayer.setDataSource(song.filePath);
-//                    mMediaPlayer.setOnPreparedListener(MusicPlayerService.this);
-                    mMediaPlayer.prepare();
-                    mMediaPlayer.seekTo(progress);
-                    mMediaPlayer.start();
-
-                    mMessageePump.broadcastMessage(Message.Type.ON_START_PLAYBACK, song);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    Toast.makeText(MusicPlayerService.this, "播放音乐失败：" + song.filePath, Toast.LENGTH_LONG).show();
-                } finally {
-                    mCurrentSong = song;
-                }
+                playSong(song, progress);
             }
         });
+    }
+
+    private void playSong(Song song, int progress) {
+        if (DEBUG) Log.d(TAG, ">>>> start playing: " + song.title);
+        try {
+            if (mMediaPlayer.isPlaying()) {
+                mMediaPlayer.stop();
+            }
+
+            mMediaPlayer.reset();
+            mMediaPlayer.setDataSource(song.filePath);
+//                    mMediaPlayer.setOnPreparedListener(MusicPlayerService.this);
+            mMediaPlayer.prepare();
+            mMediaPlayer.seekTo(progress);
+            mMediaPlayer.start();
+
+            mMessageePump.broadcastMessage(Message.Type.ON_START_PLAYBACK, song);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "播放音乐失败：" + song.filePath, Toast.LENGTH_LONG).show();
+        } finally {
+            mCurrentSong = song;
+        }
     }
 
     @Override
@@ -147,6 +154,42 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
                     mMessageePump.broadcastMessage(Message.Type.ON_RESUME_PLAYBACK, mCurrentSong);
             }
         });
+    }
+
+    public void playNextSong() {
+        List<Song> songList = mApp.getCurrentPlayList();
+        if (songList != null && songList.size() > 0) {
+            int nextSongIndex = songList.indexOf(mCurrentSong);
+            if (nextSongIndex != -1) {
+                if (nextSongIndex < songList.size() - 1)
+                    ++nextSongIndex;
+                else
+                    nextSongIndex = 0;
+            }
+
+            if (nextSongIndex == -1)
+                nextSongIndex = 0;
+
+            playSong(songList.get(nextSongIndex), 0);
+        }
+    }
+
+    public void playPrevSong() {
+        List<Song> songList = mApp.getCurrentPlayList();
+        if (songList != null && songList.size() > 0) {
+            int prevSongIndex = songList.indexOf(mCurrentSong);
+            if (prevSongIndex != -1) {
+                if (prevSongIndex > 0)
+                    --prevSongIndex;
+                else
+                    prevSongIndex = songList.size() - 1;
+            }
+
+            if (prevSongIndex == -1)
+                prevSongIndex = 0;
+
+            playSong(songList.get(prevSongIndex), 0);
+        }
     }
 
     public Song getCurrentSong () {
