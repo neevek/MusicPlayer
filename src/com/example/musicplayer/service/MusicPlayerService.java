@@ -23,7 +23,7 @@ import java.util.List;
  * Date: 7/20/13
  * Time: 5:58 PM
  */
-public class MusicPlayerService extends Service implements MediaPlayer.OnPreparedListener {
+public class MusicPlayerService extends Service implements MediaPlayer.OnCompletionListener {
     private final static boolean DEBUG = true;
     private final static String TAG = MusicPlayerService.class.getSimpleName();
 
@@ -38,8 +38,6 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
 
     private MusicPlayerDAO mMusicPlayerDAO;
 
-    private List<Song> mPlayList;
-
     @Override
     public void onCreate() {
         super.onCreate();
@@ -50,6 +48,7 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
 
         mMediaPlayer = new MediaPlayer();
         mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        mMediaPlayer.setOnCompletionListener(this);
 
         mMessageePump = mApp.getMessagePump();
 
@@ -126,8 +125,19 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
     }
 
     @Override
-    public void onPrepared(MediaPlayer mp) {
-        mp.start();
+    public void onCompletion(MediaPlayer mp) {
+        List<Song> playList = mApp.getCurrentPlayList();
+        int songIndex = playList.indexOf(mCurrentSong);
+        if (songIndex == -1 || songIndex == playList.size() - 1) {
+            mp.stop();
+            getSharedPreferences(MusicPlayerApplication.SHARED_PREF, MODE_PRIVATE).edit()
+                    .remove(MusicPlayerApplication.PREF_KEY_LAST_PLAYED_SONG_PROGRESS)
+                    .commit();
+
+            mMessageePump.broadcastMessage(Message.Type.ON_PAUSE_PLAYBACK, mCurrentSong);
+        } else {
+            playNextSong();
+        }
     }
 
     public void pausePlayback() {
@@ -157,39 +167,49 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
     }
 
     public void playNextSong() {
-        List<Song> songList = mApp.getCurrentPlayList();
-        if (songList != null && songList.size() > 0) {
-            int nextSongIndex = songList.indexOf(mCurrentSong);
-            if (nextSongIndex != -1) {
-                if (nextSongIndex < songList.size() - 1)
-                    ++nextSongIndex;
-                else
-                    nextSongIndex = 0;
+        mActionQueue.scheduleTask(new Runnable() {
+            @Override
+            public void run() {
+                List<Song> songList = mApp.getCurrentPlayList();
+                if (songList != null && songList.size() > 0) {
+                    int nextSongIndex = songList.indexOf(mCurrentSong);
+                    if (nextSongIndex != -1) {
+                        if (nextSongIndex < songList.size() - 1)
+                            ++nextSongIndex;
+                        else
+                            nextSongIndex = 0;
+                    }
+
+                    if (nextSongIndex == -1)
+                        nextSongIndex = 0;
+
+                    playSong(songList.get(nextSongIndex), 0);
+                }
             }
-
-            if (nextSongIndex == -1)
-                nextSongIndex = 0;
-
-            playSong(songList.get(nextSongIndex), 0);
-        }
+        });
     }
 
     public void playPrevSong() {
-        List<Song> songList = mApp.getCurrentPlayList();
-        if (songList != null && songList.size() > 0) {
-            int prevSongIndex = songList.indexOf(mCurrentSong);
-            if (prevSongIndex != -1) {
-                if (prevSongIndex > 0)
-                    --prevSongIndex;
-                else
-                    prevSongIndex = songList.size() - 1;
+        mActionQueue.scheduleTask(new Runnable() {
+            @Override
+            public void run() {
+                List<Song> songList = mApp.getCurrentPlayList();
+                if (songList != null && songList.size() > 0) {
+                    int prevSongIndex = songList.indexOf(mCurrentSong);
+                    if (prevSongIndex != -1) {
+                        if (prevSongIndex > 0)
+                            --prevSongIndex;
+                        else
+                            prevSongIndex = songList.size() - 1;
+                    }
+
+                    if (prevSongIndex == -1)
+                        prevSongIndex = 0;
+
+                    playSong(songList.get(prevSongIndex), 0);
+                }
             }
-
-            if (prevSongIndex == -1)
-                prevSongIndex = 0;
-
-            playSong(songList.get(prevSongIndex), 0);
-        }
+        });
     }
 
     public Song getCurrentSong () {
