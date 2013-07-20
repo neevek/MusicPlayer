@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">MusicPlayer</string>
+    <string name="app_name">音乐播放器</string>
+    <string name="title_all_music">全部音乐</string>
+    <string name="title_artist">歌手</string>
+    <string name="title_album">专辑</string>
     <string name="action_scan">扫描歌曲</string>
     <string name="action_about">关于</string>
     <string name="action_quit">退出</string>
-    <string name="hello_world">Hello world!</string>
 
 </resources>

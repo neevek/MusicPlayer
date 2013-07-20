@@ -1,12 +1,16 @@
 package com.example.musicplayer.pojo;
 
+import java.io.Serializable;
+
 /**
  * Created with IntelliJ IDEA.
  * User: neevek
  * Date: 7/20/13
  * Time: 2:35 PM
  */
-public class Song {
+public class Song implements Serializable {
+    private static final long serialVersionUID = -4181598996437174001L;
+
     public int id;
     public String title;
     public String artist;
@@ -21,5 +25,15 @@ public class Song {
         this.album = album;
         this.duration = duration;
         this.filePath = filePath;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return this.id == ((Song)o).id;
+    }
+
+    @Override
+    public int hashCode() {
+        return id;
     }
 }

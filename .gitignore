@@ -1,0 +1,14 @@
+bin/
+gen/
+obj/
+proguard/
+.classpath
+.project
+.DS_Store
+.settings
+pkgs/
+local.properties
+.hgignore
+release.keystore
+.idea/
+out

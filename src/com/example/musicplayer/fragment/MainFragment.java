@@ -1,4 +1,4 @@
-package com.example.musicplayer;
+package com.example.musicplayer.fragment;
 
 import android.os.Bundle;
 import android.os.Looper;
@@ -9,6 +9,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
+import com.example.musicplayer.MusicPlayerApplication;
+import com.example.musicplayer.R;
 import com.example.musicplayer.db.MusicPlayerDAO;
 import com.example.musicplayer.util.TaskExecutor;
 
@@ -34,6 +36,8 @@ public class MainFragment extends Fragment implements AdapterView.OnItemClickLis
     private ArtistListFragment mArtistListFragment;
     private AlbumListFragment mAlbumListFragment;
 
+    private String mTitle;
+
     public MainFragment () {
         mApp = MusicPlayerApplication.getInstance();
         mMusicPlayerDAO = mApp.getMusicPlayerDAO();
@@ -42,6 +46,8 @@ public class MainFragment extends Fragment implements AdapterView.OnItemClickLis
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mTitle = getResources().getString(R.string.app_name);
 
         mMusicListFragment = new MusicListFragment();
         mMusicListFragment.setArguments(new Bundle());
@@ -52,6 +58,8 @@ public class MainFragment extends Fragment implements AdapterView.OnItemClickLis
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        getActivity().setTitle(mTitle);
+
         if (mLayout != null) {
             ((ViewGroup)mLayout.getParent()).removeView(mLayout);
             return mLayout;

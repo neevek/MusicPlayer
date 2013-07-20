@@ -15,7 +15,7 @@
 
     <View
         android:layout_width="fill_parent"
-        android:layout_height="1dp"
+        android:layout_height="1px"
         android:background="@color/gray"
         />
 
@@ -26,7 +26,7 @@
             android:padding="8dip"
             android:baselineAligned="false">
 
-        <LinearLayout
+        <RelativeLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -42,29 +42,44 @@
                     android:singleLine="true"
                     android:maxLines="1"
                     android:ellipsize="end"
-                    android:text="歌名asdfasdffefwf asdf fw fwfsf"
+                    android:text="未选歌曲"
+                    android:textSize="@dimen/listview_item_title_text_size"
                     />
 
             <TextView
-                    android:id="@+id/tv_songer"
+                    android:id="@+id/tv_artist"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/black"
+                    android:textColor="@color/gray"
                     android:maxLines="1"
                     android:ellipsize="end"
-                    android:text="歌手名"
+                    android:text=""
+                    android:layout_below="@id/tv_song_title"
                     />
 
             <TextView
-                    android:id="@+id/tv_time"
-                    android:layout_width="fill_parent"
+                    android:id="@+id/tv_song_progress"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/black"
+                    android:textColor="@color/gray"
                     android:maxLines="1"
                     android:ellipsize="end"
-                    android:text="00:04 - 05:04"
+                    android:text="00:00"
+                    android:layout_below="@id/tv_artist"
                     />
-        </LinearLayout>
+
+            <TextView
+                    android:id="@+id/tv_song_duration"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/gray"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="/00:00"
+                    android:layout_below="@id/tv_artist"
+                    android:layout_toRightOf="@id/tv_song_progress"
+                    />
+        </RelativeLayout>
 
 
         <LinearLayout
@@ -72,6 +87,7 @@
                 android:layout_height="wrap_content"
                 >
             <ImageButton
+                    android:id="@+id/btn_play_prev_song"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:src="@drawable/icon_prev_song_selector"
@@ -80,6 +96,7 @@
                     android:contentDescription=""/>
 
             <ImageButton
+                    android:id="@+id/btn_play_and_pause"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:src="@drawable/icon_play_selector"
@@ -88,6 +105,7 @@
                     android:contentDescription=""/>
 
             <ImageButton
+                    android:id="@+id/btn_play_next_song"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:src="@drawable/icon_next_song_selector"

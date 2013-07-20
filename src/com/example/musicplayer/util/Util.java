@@ -31,4 +31,34 @@ public class Util {
             obj = defaultValue;
         return obj;
     }
+
+    public static String formatMilliseconds(int milliseconds, StringBuilder buffer) {
+        int seconds = milliseconds / 1000;
+
+        if (buffer == null)
+            buffer = new StringBuilder();
+
+        int minutes = seconds / 60;
+        seconds = seconds % 60;
+
+        if (minutes == 0) {
+            buffer.append("00");
+        } else {
+            if (minutes < 10)
+                buffer.append('0');
+            buffer.append(minutes);
+        }
+
+        buffer.append(':');
+
+        if (seconds == 0) {
+            buffer.append("00");
+        } else {
+            if (seconds < 10)
+                buffer.append('0');
+            buffer.append(seconds);
+        }
+
+        return buffer.toString();
+    }
 }

@@ -210,6 +210,33 @@ public class MusicPlayerDAO {
         return list;
     }
 
+    public Song getSongById (int id) {
+        SQLiteDatabase db;
+        Cursor cursor = null;
+        Song song = null;
+        try {
+            db = mDbHelper.getReadableDatabase();
+            String sql = "SELECT _id, title, artist, album, duration, file_path FROM song_info WHERE _id=" + id;
+            cursor = db.rawQuery(sql, null);
+
+            if (cursor.moveToFirst()) {
+                String title = cursor.getString(1);
+                String artist = cursor.getString(2);
+                String album = cursor.getString(3);
+                int duration = cursor.getInt(4);
+                String filePath = cursor.getString(5);
+
+                song = new Song (id, title, artist, album, duration, filePath);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null)
+                cursor.close();
+        }
+        return song;
+    }
+
     public List<Artist> getArtists () {
         SQLiteDatabase db;
         Cursor cursor = null;

@@ -1,5 +1,8 @@
-package com.example.musicplayer;
+package com.example.musicplayer.fragment;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -7,8 +10,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
+import com.example.musicplayer.MusicPlayerApplication;
+import com.example.musicplayer.R;
 import com.example.musicplayer.db.MusicPlayerDAO;
 import com.example.musicplayer.pojo.Song;
+import com.example.musicplayer.service.MusicPlayerService;
 import com.example.musicplayer.util.TaskExecutor;
 
 import java.util.List;
@@ -20,9 +26,12 @@ import java.util.List;
  * Time: 10:12 AM
  */
 public class MusicListFragment extends Fragment implements AdapterView.OnItemClickListener {
+    private final static String TITLE = "我的音乐";
+
     private final static boolean DEBUG = true;
     private final static String TAG = MusicListFragment.class.getSimpleName();
 
+    private MusicPlayerApplication mApp;
     private View mLayout;
 
     private List<Song> mSongList;
@@ -40,7 +49,8 @@ public class MusicListFragment extends Fragment implements AdapterView.OnItemCli
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mMusicPlayerDAO = MusicPlayerApplication.getInstance().getMusicPlayerDAO();
+        mApp = MusicPlayerApplication.getInstance();
+        mMusicPlayerDAO = mApp.getMusicPlayerDAO();
 
 
         final Bundle args = getArguments();
@@ -86,6 +96,7 @@ public class MusicListFragment extends Fragment implements AdapterView.OnItemCli
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        getActivity().setTitle(TITLE);
         if (mLayout != null) {
             ((ViewGroup)mLayout.getParent()).removeView(mLayout);
             return mLayout;
@@ -145,5 +156,6 @@ public class MusicListFragment extends Fragment implements AdapterView.OnItemCli
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        mApp.startPlayingSong(mSongList.get(position).id, 0);
     }
 }

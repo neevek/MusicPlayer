@@ -1,8 +1,7 @@
-package com.example.musicplayer;
+package com.example.musicplayer.fragment;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,8 +9,10 @@ import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import com.example.musicplayer.MusicPlayerApplication;
+import com.example.musicplayer.R;
 import com.example.musicplayer.db.MusicPlayerDAO;
-import com.example.musicplayer.pojo.Album;
+import com.example.musicplayer.pojo.Artist;
 import com.example.musicplayer.util.TaskExecutor;
 
 import java.util.List;
@@ -22,19 +23,23 @@ import java.util.List;
  * Date: 7/20/13
  * Time: 10:12 AM
  */
-public class AlbumListFragment extends Fragment implements AdapterView.OnItemClickListener {
+public class ArtistListFragment extends Fragment implements AdapterView.OnItemClickListener {
     private final static boolean DEBUG = true;
-    private final static String TAG = AlbumListFragment.class.getSimpleName();
+    private final static String TAG = ArtistListFragment.class.getSimpleName();
 
-    private List<Album> mAlbumList;
+    private List<Artist> mArtistList;
     private ListView mListView;
-    private AlbumListAdapter mAdapter;
+    private ArtistListAdapter mAdapter;
 
     private MusicPlayerDAO mMusicPlayerDAO;
+
+    private String mTitle;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mTitle = getResources().getString(R.string.title_artist);
 
         mMusicPlayerDAO = MusicPlayerApplication.getInstance().getMusicPlayerDAO();
 
@@ -44,12 +49,12 @@ public class AlbumListFragment extends Fragment implements AdapterView.OnItemCli
         TaskExecutor.executeTask(new Runnable() {
             @Override
             public void run() {
-                mAlbumList = mMusicPlayerDAO.getAlbums();
+                mArtistList = mMusicPlayerDAO.getArtists();
 
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        mAdapter = new AlbumListAdapter();
+                        mAdapter = new ArtistListAdapter();
                         mListView.setAdapter(mAdapter);
                     }
                 });
@@ -61,11 +66,13 @@ public class AlbumListFragment extends Fragment implements AdapterView.OnItemCli
     @Override
     public void onDestroy() {
         super.onDestroy();
-        mAlbumList.clear();
+        mArtistList.clear();
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        getActivity().setTitle(R.string.title_artist);
+
         if (mListView != null && mListView.getParent() != null) {
             ((ViewGroup)mListView.getParent()).removeView(mListView);
             return mListView;
@@ -74,15 +81,15 @@ public class AlbumListFragment extends Fragment implements AdapterView.OnItemCli
         return mListView;
     }
 
-    private class AlbumListAdapter extends BaseAdapter {
+    private class ArtistListAdapter extends BaseAdapter {
         @Override
         public int getCount() {
-            return mAlbumList.size();
+            return mArtistList.size();
         }
 
         @Override
         public Object getItem(int position) {
-            return mAlbumList.get(position);
+            return mArtistList.get(position);
         }
 
         @Override
@@ -94,27 +101,27 @@ public class AlbumListFragment extends Fragment implements AdapterView.OnItemCli
         public View getView(int position, View convertView, ViewGroup parent) {
             ViewHolder holder;
             if (convertView == null) {
-                convertView = getLayoutInflater(null).inflate(R.layout.album_list_item, null);
+                convertView = getLayoutInflater(null).inflate(R.layout.artist_list_item, null);
                 holder = new ViewHolder();
 
-                holder.albumTitle = (TextView) convertView.findViewById(R.id.tv_album_title);
-                holder.albumInfo = (TextView) convertView.findViewById(R.id.tv_album_info);
+                holder.artistTitle = (TextView) convertView.findViewById(R.id.tv_artist_name);
+                holder.artistInfo = (TextView) convertView.findViewById(R.id.tv_artist_info);
 
                 convertView.setTag(holder);
             } else {
                 holder = (ViewHolder) convertView.getTag();
             }
 
-            Album album = mAlbumList.get(position);
-            holder.albumTitle.setText(position + 1 + ". " + album.name);
-            holder.albumInfo.setText("共" + album.songCount + "首歌曲");
+            Artist artist = mArtistList.get(position);
+            holder.artistTitle.setText(position + 1 + ". " + artist.name);
+            holder.artistInfo.setText("共" + artist.songCount + "首歌曲");
 
             return convertView;
         }
 
         class ViewHolder {
-            TextView albumTitle;
-            TextView albumInfo;
+            TextView artistTitle;
+            TextView artistInfo;
         }
     }
 
