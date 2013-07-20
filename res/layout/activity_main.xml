@@ -1,0 +1,100 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity"
+    android:orientation="vertical"
+    >
+
+    <FrameLayout
+            android:id="@+id/container"
+        android:layout_width="fill_parent"
+        android:layout_height="0dip"
+        android:layout_weight="1"
+        />
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:background="@color/gray"
+        />
+
+    <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="@dimen/bottom_bar_height"
+            android:gravity="center_vertical"
+            android:padding="8dip"
+            android:baselineAligned="false">
+
+        <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:paddingRight="8dp"
+                >
+
+            <TextView
+                    android:id="@+id/tv_song_title"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/black"
+                    android:singleLine="true"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="歌名asdfasdffefwf asdf fw fwfsf"
+                    />
+
+            <TextView
+                    android:id="@+id/tv_songer"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/black"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="歌手名"
+                    />
+
+            <TextView
+                    android:id="@+id/tv_time"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/black"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="00:04 - 05:04"
+                    />
+        </LinearLayout>
+
+
+        <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                >
+            <ImageButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/icon_prev_song_selector"
+                    android:background="@null"
+                    android:layout_marginRight="8dp"
+                    android:contentDescription=""/>
+
+            <ImageButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/icon_play_selector"
+                    android:background="@null"
+                    android:layout_marginRight="8dp"
+                    android:contentDescription=""/>
+
+            <ImageButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/icon_next_song_selector"
+                    android:background="@null"
+                    android:layout_marginRight="4dp"
+                    android:contentDescription=""/>
+
+            </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

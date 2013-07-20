@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:orientation="vertical"
+      android:padding="4dip"
+        >
+
+    <TextView
+            android:id="@+id/tv_album_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/black"
+            android:textSize="@dimen/listview_item_title_text_size"
+            android:text="全部音乐"
+            android:padding="2dip"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:maxLines="1"
+            />
+
+    <TextView
+            android:id="@+id/tv_album_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/gray"
+            android:textSize="@dimen/listview_item_subtitle_text_size"
+            android:text="全部音乐"
+            android:padding="2dp"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:layout_below="@id/tv_album_title"
+            />
+
+</RelativeLayout>
