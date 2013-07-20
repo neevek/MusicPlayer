@@ -178,6 +178,7 @@ public class MusicPlayerDAO {
             if (cursor != null)
                 cursor.close();
         }
+        Util.sortSongList(list);
         return list;
     }
 
@@ -207,6 +208,8 @@ public class MusicPlayerDAO {
             if (cursor != null)
                 cursor.close();
         }
+
+        Util.sortAlbumList(list);
         return list;
     }
 
@@ -263,6 +266,8 @@ public class MusicPlayerDAO {
             if (cursor != null)
                 cursor.close();
         }
+
+        Util.sortArtistList(list);
         return list;
     }
 }

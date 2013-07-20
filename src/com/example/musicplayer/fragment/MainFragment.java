@@ -9,9 +9,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
+import com.example.musicplayer.MainActivity;
 import com.example.musicplayer.MusicPlayerApplication;
 import com.example.musicplayer.R;
 import com.example.musicplayer.db.MusicPlayerDAO;
+import com.example.musicplayer.message.Message;
+import com.example.musicplayer.message.MessageData2;
+import com.example.musicplayer.pojo.SongGroup;
 import com.example.musicplayer.util.TaskExecutor;
 
 /**
@@ -32,10 +36,6 @@ public class MainFragment extends Fragment implements AdapterView.OnItemClickLis
     private final static String[] MENU_ITEM_TEXT = new String[]{"全部音乐", "歌手", "专辑"};
     private final static int[] MENU_ITEM_DATA_COUNT = new int[3];
 
-    private MusicListFragment mMusicListFragment;
-    private ArtistListFragment mArtistListFragment;
-    private AlbumListFragment mAlbumListFragment;
-
     private String mTitle;
 
     public MainFragment () {
@@ -48,12 +48,6 @@ public class MainFragment extends Fragment implements AdapterView.OnItemClickLis
         super.onCreate(savedInstanceState);
 
         mTitle = getResources().getString(R.string.app_name);
-
-        mMusicListFragment = new MusicListFragment();
-        mMusicListFragment.setArguments(new Bundle());
-
-        mArtistListFragment = new ArtistListFragment();
-        mAlbumListFragment = new AlbumListFragment();
     }
 
     @Override
@@ -69,8 +63,6 @@ public class MainFragment extends Fragment implements AdapterView.OnItemClickLis
 
         mGridView = (GridView) mLayout;
         mGridView.setOnItemClickListener(this);
-
-        System.out.println(">>>>>>>>>>>>> main frag createview");
 
         TaskExecutor.executeTask(new Runnable() {
             @Override
@@ -152,25 +144,16 @@ public class MainFragment extends Fragment implements AdapterView.OnItemClickLis
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        Fragment fragment = null;
         switch (position) {
             case 0:
-                mMusicListFragment.getArguments().putInt(MusicListFragment.LIST_TYPE, MusicListFragment.TYPE_ALL_MUSIC);
-                fragment = mMusicListFragment;
+                mApp.getMessagePump().broadcastMessage(Message.Type.SHOW_FRAGMENT_MUSIC_LIST, new MessageData2<Integer, SongGroup>(MainActivity.TYPE_ALL_MUSIC, null));
                 break;
             case 1:
-                fragment = mArtistListFragment;
+                mApp.getMessagePump().broadcastMessage(Message.Type.SHOW_FRAGMENT_ARTIST_LIST, null);
                 break;
             case 2:
-                fragment = mAlbumListFragment;
+                mApp.getMessagePump().broadcastMessage(Message.Type.SHOW_FRAGMENT_ALBUM_LIST, null);
                 break;
         }
-
-        FragmentManager fm = getFragmentManager();
-        FragmentTransaction ft = fm.beginTransaction();
-
-        ft.replace(R.id.container, fragment);
-        ft.addToBackStack(null);
-        ft.commit();
     }
 }

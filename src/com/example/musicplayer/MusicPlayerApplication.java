@@ -62,7 +62,7 @@ public class MusicPlayerApplication extends Application {
 
 
     private final static Object INIT_CACHED_SONG_LIST_SYNC = new Object();
-    public List<Song> getCachedSongList (boolean init) {
+    public List<Song> getCachedAllMusicSongList(boolean init) {
         if (init) {
             synchronized (INIT_CACHED_SONG_LIST_SYNC) {
                 if (mCachedSongList == null) {

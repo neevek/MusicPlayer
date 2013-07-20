@@ -26,6 +26,10 @@ public class Message {
         ON_PAUSE_PLAYBACK,
         ON_RESUME_PLAYBACK,
         ON_UPDATE_PLAYING_PROGRESS,
+
+        SHOW_FRAGMENT_MUSIC_LIST,
+        SHOW_FRAGMENT_ALBUM_LIST,
+        SHOW_FRAGMENT_ARTIST_LIST,
     }
 
     public Message(Type type, Object data, int priority, Object sender) {

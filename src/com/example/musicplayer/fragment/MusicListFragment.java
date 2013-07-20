@@ -1,8 +1,5 @@
 package com.example.musicplayer.fragment;
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -10,11 +7,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
+import com.example.musicplayer.MainActivity;
 import com.example.musicplayer.MusicPlayerApplication;
 import com.example.musicplayer.R;
 import com.example.musicplayer.db.MusicPlayerDAO;
 import com.example.musicplayer.pojo.Song;
-import com.example.musicplayer.service.MusicPlayerService;
 import com.example.musicplayer.util.TaskExecutor;
 
 import java.util.List;
@@ -26,8 +23,6 @@ import java.util.List;
  * Time: 10:12 AM
  */
 public class MusicListFragment extends Fragment implements AdapterView.OnItemClickListener {
-    private final static String TITLE = "我的音乐";
-
     private final static boolean DEBUG = true;
     private final static String TAG = MusicListFragment.class.getSimpleName();
 
@@ -40,10 +35,7 @@ public class MusicListFragment extends Fragment implements AdapterView.OnItemCli
 
     private MusicPlayerDAO mMusicPlayerDAO;
 
-    public final static String LIST_TYPE = "list_type";
-    public final static int TYPE_ALL_MUSIC = 0;
-    public final static int TYPE_BY_ARTIST = 1;
-    public final static int TYPE_BY_ALBUM = 2;
+    private String mTitle;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -54,7 +46,9 @@ public class MusicListFragment extends Fragment implements AdapterView.OnItemCli
 
 
         final Bundle args = getArguments();
-        final int type = args.getInt(LIST_TYPE, TYPE_ALL_MUSIC);
+        final int type = args.getInt(MainActivity.LIST_TYPE, MainActivity.TYPE_ALL_MUSIC);
+
+        mTitle = args.getString(MainActivity.EXTRA_TITLE);
         if (DEBUG) Log.d(TAG, ">>>> list type: " + type);
 
         TaskExecutor.executeTask(new Runnable() {
@@ -62,14 +56,14 @@ public class MusicListFragment extends Fragment implements AdapterView.OnItemCli
             public void run() {
                 List<Song> songList = null;
                 switch (type) {
-                    case TYPE_ALL_MUSIC:
-                        songList = mMusicPlayerDAO.getAllSongs();
+                    case MainActivity.TYPE_ALL_MUSIC:
+                        songList = mApp.getCachedAllMusicSongList(true);
                         break;
-                    case TYPE_BY_ARTIST:
-                        songList = mMusicPlayerDAO.getSongsByAlbumId(args.getInt("artist_id"));
+                    case MainActivity.TYPE_BY_ARTIST:
+                        songList = mMusicPlayerDAO.getSongsByArtistId(args.getInt(MainActivity.EXTRA_ID));
                         break;
-                    case TYPE_BY_ALBUM:
-                        songList = mMusicPlayerDAO.getSongsByAlbumId(args.getInt("album_id"));
+                    case MainActivity.TYPE_BY_ALBUM:
+                        songList = mMusicPlayerDAO.getSongsByAlbumId(args.getInt(MainActivity.EXTRA_ID));
                         break;
                 }
 
@@ -81,6 +75,8 @@ public class MusicListFragment extends Fragment implements AdapterView.OnItemCli
                         if (mAdapter == null)
                             mAdapter = new MusicListAdapter();
                         mListView.setAdapter(mAdapter);
+
+                        getActivity().setTitle(mTitle);
                     }
                 });
             }
@@ -91,12 +87,14 @@ public class MusicListFragment extends Fragment implements AdapterView.OnItemCli
     @Override
     public void onDestroy() {
         super.onDestroy();
-        mSongList.clear();
+        mSongList = null;
+        mListView.setAdapter(null);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        getActivity().setTitle(TITLE);
+        getActivity().setTitle(mTitle);
+
         if (mLayout != null) {
             ((ViewGroup)mLayout.getParent()).removeView(mLayout);
             return mLayout;

@@ -1,5 +1,16 @@
 package com.example.musicplayer.util;
 
+import com.example.musicplayer.pojo.Album;
+import com.example.musicplayer.pojo.Artist;
+import com.example.musicplayer.pojo.Song;
+import com.example.musicplayer.pojo.SongGroup;
+
+import java.text.Collator;
+import java.text.RuleBasedCollator;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
@@ -60,5 +71,34 @@ public class Util {
         }
 
         return buffer.toString();
+    }
+
+    private static RuleBasedCollator mChineseSortCollator = (RuleBasedCollator)Collator.getInstance(Locale.CHINA);
+
+    public static void sortSongList (List<Song> songList) {
+        Collections.sort(songList, new Comparator<Song>() {
+            @Override
+            public int compare(Song lhs, Song rhs) {
+                return mChineseSortCollator.compare(lhs.title, rhs.title);
+            }
+        });
+    }
+
+    public static void sortAlbumList (List<Album> albumList) {
+        Collections.sort(albumList, new Comparator<Album>() {
+            @Override
+            public int compare(Album lhs, Album rhs) {
+                return mChineseSortCollator.compare(lhs.name, rhs.name);
+            }
+        });
+    }
+
+    public static void sortArtistList (List<Artist> albumList) {
+        Collections.sort(albumList, new Comparator<Artist>() {
+            @Override
+            public int compare(Artist lhs, Artist rhs) {
+                return mChineseSortCollator.compare(lhs.name, rhs.name);
+            }
+        });
     }
 }

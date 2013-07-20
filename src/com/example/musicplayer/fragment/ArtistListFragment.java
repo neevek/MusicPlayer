@@ -9,9 +9,12 @@ import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import com.example.musicplayer.MainActivity;
 import com.example.musicplayer.MusicPlayerApplication;
 import com.example.musicplayer.R;
 import com.example.musicplayer.db.MusicPlayerDAO;
+import com.example.musicplayer.message.Message;
+import com.example.musicplayer.message.MessageData2;
 import com.example.musicplayer.pojo.Artist;
 import com.example.musicplayer.util.TaskExecutor;
 
@@ -27,6 +30,8 @@ public class ArtistListFragment extends Fragment implements AdapterView.OnItemCl
     private final static boolean DEBUG = true;
     private final static String TAG = ArtistListFragment.class.getSimpleName();
 
+    private MusicPlayerApplication mApp;
+
     private List<Artist> mArtistList;
     private ListView mListView;
     private ArtistListAdapter mAdapter;
@@ -39,9 +44,11 @@ public class ArtistListFragment extends Fragment implements AdapterView.OnItemCl
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        mApp = MusicPlayerApplication.getInstance();
+
         mTitle = getResources().getString(R.string.title_artist);
 
-        mMusicPlayerDAO = MusicPlayerApplication.getInstance().getMusicPlayerDAO();
+        mMusicPlayerDAO = mApp.getMusicPlayerDAO();
 
         mListView = (ListView)LayoutInflater.from(getActivity()).inflate(R.layout.music_list, null, false);
         mListView.setOnItemClickListener(this);
@@ -127,5 +134,6 @@ public class ArtistListFragment extends Fragment implements AdapterView.OnItemCl
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        mApp.getMessagePump().broadcastMessage(Message.Type.SHOW_FRAGMENT_MUSIC_LIST, new MessageData2<Integer, Artist>(MainActivity.TYPE_BY_ARTIST, mArtistList.get(position)), Message.PRIORITY_EXTREMELY_HIGH);
     }
 }

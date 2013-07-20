@@ -1,6 +1,5 @@
 package com.example.musicplayer;
 
-import android.app.Fragment;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -8,6 +7,7 @@ import android.content.SharedPreferences;
 import android.media.MediaMetadataRetriever;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -20,11 +20,16 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.example.musicplayer.db.MusicPlayerDAO;
+import com.example.musicplayer.fragment.AlbumListFragment;
+import com.example.musicplayer.fragment.ArtistListFragment;
 import com.example.musicplayer.fragment.MainFragment;
+import com.example.musicplayer.fragment.MusicListFragment;
 import com.example.musicplayer.message.Message;
 import com.example.musicplayer.message.MessageCallback;
+import com.example.musicplayer.message.MessageData2;
 import com.example.musicplayer.message.MessagePump;
 import com.example.musicplayer.pojo.Song;
+import com.example.musicplayer.pojo.SongGroup;
 import com.example.musicplayer.service.MusicPlayerService;
 import com.example.musicplayer.service.MusicPlayerServiceBinder;
 import com.example.musicplayer.util.TaskExecutor;
@@ -39,11 +44,17 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     private MusicPlayerApplication mApp;
     private MusicPlayerDAO mMusicPlayerDAO;
+
     private MainFragment mMainFragment;
+    private MusicListFragment mMusicListFragment;
+    private ArtistListFragment mArtistListFragment;
+    private AlbumListFragment mAlbumListFragment;
 
     private MusicPlayerService mMusicPlayerService;
 
     private MessagePump mMessagePump;
+
+    private boolean mDestroyed;
 
     private TextView mCurSongTitle;
     private TextView mCurArtist;
@@ -56,6 +67,13 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     private SharedPreferences mPrefs;
 
+    public final static String LIST_TYPE = "list_type";
+    public final static String EXTRA_ID = "extra_id";
+    public final static String EXTRA_TITLE = "extra_title";
+    public final static int TYPE_ALL_MUSIC = 0;
+    public final static int TYPE_BY_ARTIST = 1;
+    public final static int TYPE_BY_ALBUM = 2;
+
     @Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -65,8 +83,10 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
         mApp = (MusicPlayerApplication)getApplication();
         mMusicPlayerDAO = mApp.getMusicPlayerDAO();
+        mMessagePump = mApp.getMessagePump();
 
-        setMainFragment();
+        initFragments();
+        showFragment(mMainFragment);
 
         mBtnPlayAndPause = (ImageButton) findViewById(R.id.btn_play_and_pause);
         mBtnPlayAndPause.setOnClickListener(this);
@@ -78,12 +98,6 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         mCurArtist = (TextView) findViewById(R.id.tv_artist);
         mCurSongProgress = (TextView) findViewById(R.id.tv_song_progress);
         mCurSongDuration = (TextView) findViewById(R.id.tv_song_duration);
-
-        mMessagePump = mApp.getMessagePump();
-        mMessagePump.register(Message.Type.ON_START_PLAYBACK, this);
-        mMessagePump.register(Message.Type.ON_RESUME_PLAYBACK, this);
-        mMessagePump.register(Message.Type.ON_PAUSE_PLAYBACK, this);
-        mMessagePump.register(Message.Type.ON_UPDATE_PLAYING_PROGRESS, this);
 
         mServiceConnection = new ServiceConnection() {
             @Override
@@ -125,22 +139,52 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
         Intent intent = new Intent(this, MusicPlayerService.class);
         bindService(intent, mServiceConnection, BIND_AUTO_CREATE);
+
+        registerMessageCallbacks();
 	}
+
+    private void registerMessageCallbacks() {
+        mMessagePump.register(Message.Type.ON_START_PLAYBACK, this);
+        mMessagePump.register(Message.Type.ON_RESUME_PLAYBACK, this);
+        mMessagePump.register(Message.Type.ON_PAUSE_PLAYBACK, this);
+        mMessagePump.register(Message.Type.ON_UPDATE_PLAYING_PROGRESS, this);
+
+        mMessagePump.register(Message.Type.SHOW_FRAGMENT_MUSIC_LIST, this);
+        mMessagePump.register(Message.Type.SHOW_FRAGMENT_ARTIST_LIST, this);
+        mMessagePump.register(Message.Type.SHOW_FRAGMENT_ALBUM_LIST, this);
+    }
 
     @Override
     public void onAttachFragment(Fragment fragment) {
         super.onAttachFragment(fragment);
     }
 
-    private void setMainFragment() {
+    private void initFragments () {
         mMainFragment = new MainFragment();
+
+        mMusicListFragment = new MusicListFragment();
+        mMusicListFragment.setArguments(new Bundle());
+
+        mArtistListFragment = new ArtistListFragment();
+        mAlbumListFragment = new AlbumListFragment();
+    }
+
+    private void showFragment(Fragment fragment) {
+        if (mDestroyed)
+            return;
 
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
 
-        ft.add(R.id.container, mMainFragment);
-//        ft.setTransition(FragmentTransaction.TRANSIT_ENTER_MASK);
-        ft.commit();
+        if (fragment == mMainFragment) {
+            ft.add(R.id.container, fragment);
+        } else {
+            ft.replace(R.id.container, fragment);
+            ft.addToBackStack(null);
+            ft.setTransition(FragmentTransaction.TRANSIT_ENTER_MASK);
+        }
+
+        ft.commitAllowingStateLoss();
     }
 
     @Override
@@ -252,14 +296,14 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         switch (v.getId()) {
             case R.id.btn_play_prev_song: {
                 final Song currentSong = mMusicPlayerService.getCurrentSong();
-                List<Song> songList = mApp.getCachedSongList(false);
+                List<Song> songList = mApp.getCachedAllMusicSongList(false);
                 if (songList != null) {
                     playPrevSong(currentSong, songList);
                 } else {
                     TaskExecutor.executeTask(new Runnable() {
                         @Override
                         public void run() {
-                            List<Song> songList = mApp.getCachedSongList(true);
+                            List<Song> songList = mApp.getCachedAllMusicSongList(true);
                             playPrevSong(currentSong, songList);
                         }
                     });
@@ -286,14 +330,14 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                 break;
             case R.id.btn_play_next_song: {
                 final Song currentSong = mMusicPlayerService.getCurrentSong();
-                List<Song> songList = mApp.getCachedSongList(false);
+                List<Song> songList = mApp.getCachedAllMusicSongList(false);
                 if (songList != null) {
                     playNextSong(currentSong, songList);
                 } else {
                     TaskExecutor.executeTask(new Runnable() {
                         @Override
                         public void run() {
-                            List<Song> songList = mApp.getCachedSongList(true);
+                            List<Song> songList = mApp.getCachedAllMusicSongList(true);
                             playNextSong(currentSong, songList);
                         }
                     });
@@ -368,6 +412,23 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
             case ON_UPDATE_PLAYING_PROGRESS:
                 onUpdatePlayingProgress((Integer) message.data);
                 break;
+            case SHOW_FRAGMENT_MUSIC_LIST:
+                MessageData2<Integer, SongGroup> messageData2 = (MessageData2<Integer, SongGroup>) message.data;
+                mMusicListFragment.getArguments().putInt(LIST_TYPE, messageData2.o1);
+                if (messageData2.o2 != null) {
+                    mMusicListFragment.getArguments().putInt(EXTRA_ID, messageData2.o2.id);
+                    mMusicListFragment.getArguments().putString(EXTRA_TITLE, messageData2.o2.name);
+                } else {
+                    mMusicListFragment.getArguments().putString(EXTRA_TITLE, getResources().getString(R.string.title_all_music));
+                }
+                showFragment(mMusicListFragment);
+                break;
+            case SHOW_FRAGMENT_ARTIST_LIST:
+                showFragment(mArtistListFragment);
+                break;
+            case SHOW_FRAGMENT_ALBUM_LIST:
+                showFragment(mAlbumListFragment);
+                break;
         }
     }
 
@@ -403,6 +464,16 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     private void onUpdatePlayingProgress (int milliseconds) {
         mCurSongProgress.setText(Util.formatMilliseconds(milliseconds, mProgressBuffer));
         mProgressBuffer.delete(0, mProgressBuffer.length());
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (isFinishing()) {
+            mDestroyed = true;
+
+            getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        }
     }
 
     @Override
