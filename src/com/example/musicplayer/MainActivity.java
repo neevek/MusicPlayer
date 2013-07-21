@@ -1,9 +1,8 @@
 package com.example.musicplayer;
 
-import android.content.ComponentName;
-import android.content.Intent;
-import android.content.ServiceConnection;
-import android.content.SharedPreferences;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.*;
 import android.media.MediaMetadataRetriever;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -72,6 +71,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     public final static int TYPE_BY_ARTIST = 1;
     public final static int TYPE_BY_ALBUM = 2;
 
+    private final static int DIALOG_ABOUT_ID = 1;
 
     @Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -193,16 +193,16 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     }
 
     @Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.main, menu);
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
         mScanSongsMenuItem = menu.getItem(0);
-		return true;
-	}
-	
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
             case R.id.action_scan:
                 mScanSongsMenuItem.setEnabled(false);
                 setProgressBarIndeterminateVisibility(true);
@@ -230,14 +230,37 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                     }
                 });
                 break;
-		case R.id.action_quit:
-			finish();
-			return true;
+            case R.id.action_quit:
+                finish();
+                return true;
+            case R.id.action_about:
+                showDialog(DIALOG_ABOUT_ID);
+                break;
 		}
 		return super.onOptionsItemSelected(item);
 	}
-	
-	@Override
+
+    @Override
+    protected Dialog onCreateDialog(int id) {
+        switch (id) {
+            case DIALOG_ABOUT_ID:
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("关于")
+                        .setMessage("This music player is a proof of concept demonstration made by @neevek in July, 2013.")
+                        .setCancelable(true)
+                        .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+                return builder.create();
+        }
+
+        return super.onCreateDialog(id);
+    }
+
+    @Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		switch (keyCode) {
 		case KeyEvent.KEYCODE_BACK:
