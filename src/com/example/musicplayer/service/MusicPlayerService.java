@@ -1,6 +1,9 @@
 package com.example.musicplayer.service;
 
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.media.AudioManager;
@@ -8,12 +11,15 @@ import android.media.MediaPlayer;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
+import com.example.musicplayer.MainActivity;
 import com.example.musicplayer.MusicPlayerApplication;
+import com.example.musicplayer.R;
 import com.example.musicplayer.db.MusicPlayerDAO;
 import com.example.musicplayer.message.Message;
 import com.example.musicplayer.message.MessagePump;
 import com.example.musicplayer.pojo.Song;
 import com.example.musicplayer.sync.TaskQueue;
+import com.example.musicplayer.util.Util;
 
 import java.util.List;
 
@@ -38,6 +44,11 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
 
     private MusicPlayerDAO mMusicPlayerDAO;
 
+    private NotificationManager mNotificationManager;
+    private PendingIntent mOpenMainAppPendingIntent;
+    private Notification notification;
+    private StringBuilder mProgressBuffer = new StringBuilder();
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -57,6 +68,15 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
 
         mPlayingProgressNotifier = new PlayingProgressNotifier();
         mPlayingProgressNotifier.start();
+
+
+        mNotificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+
+        Intent openMainAppIntent = new Intent(this, MainActivity.class);
+        openMainAppIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        // have no idea why i need this type, it just makes it work
+//        openMainAppIntent.setType("helloworld");
+        mOpenMainAppPendingIntent = PendingIntent.getActivity(this, 0, openMainAppIntent, 0);
     }
 
     @Override
@@ -95,12 +115,24 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
 
             mMediaPlayer.reset();
             mMediaPlayer.setDataSource(song.filePath);
-//                    mMediaPlayer.setOnPreparedListener(MusicPlayerService.this);
             mMediaPlayer.prepare();
             mMediaPlayer.seekTo(progress);
             mMediaPlayer.start();
 
             mMessageePump.broadcastMessage(Message.Type.ON_START_PLAYBACK, song);
+//
+//            public Notification(Context context, int icon, CharSequence tickerText, long when,
+//            CharSequence contentTitle, CharSequence contentText, Intent contentIntent)
+
+            notification = new Notification();
+            notification.icon = R.drawable.ic_launcher;
+            notification.flags &= ~Notification.FLAG_AUTO_CANCEL;
+            notification.tickerText = "正在播放 " + song.title;
+
+            mProgressBuffer.delete(0, mProgressBuffer.length());
+            notification.setLatestEventInfo(this, song.title + "(" + song.artist+ ")", Util.formatMilliseconds(progress, mProgressBuffer), mOpenMainAppPendingIntent);
+
+            startForeground(1, notification);
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(this, "播放音乐失败：" + song.filePath, Toast.LENGTH_LONG).show();
@@ -122,6 +154,8 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
 
         mActionQueue.stopTaskQueue();
         mMediaPlayer.release();
+
+        stopForeground(true);
     }
 
     @Override
@@ -133,6 +167,8 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
             getSharedPreferences(MusicPlayerApplication.SHARED_PREF, MODE_PRIVATE).edit()
                     .remove(MusicPlayerApplication.PREF_KEY_LAST_PLAYED_SONG_PROGRESS)
                     .commit();
+
+            stopForeground(true);
 
             mMessageePump.broadcastMessage(Message.Type.ON_PAUSE_PLAYBACK, mCurrentSong);
         } else {
@@ -252,6 +288,11 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
                     continue;
 
                 mLastPlayingProgress = mMediaPlayer.getCurrentPosition();
+
+                mProgressBuffer.delete(0, mProgressBuffer.length());
+                notification.setLatestEventInfo(MusicPlayerService.this, mCurrentSong.title + "(" + mCurrentSong.artist+ ")", Util.formatMilliseconds(mLastPlayingProgress, mProgressBuffer), mOpenMainAppPendingIntent);
+                mNotificationManager.notify(1, notification);
+
                 mMessageePump.broadcastMessage(Message.Type.ON_UPDATE_PLAYING_PROGRESS, mLastPlayingProgress);
             }
         }

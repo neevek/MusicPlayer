@@ -341,56 +341,6 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         }
     }
 
-    private void playPrevSong(Song currentSong, List<Song> songList) {
-        if (songList.size() > 0) {
-            if (currentSong == null) {
-                int lastPlayedSongId = mPrefs.getInt(MusicPlayerApplication.PREF_KEY_LAST_PLAYED_SONG_ID, 0);
-                if (lastPlayedSongId > 0)
-                    currentSong = mMusicPlayerDAO.getSongById(lastPlayedSongId);
-            }
-
-            int prevSongIndex = -1;
-            if (currentSong != null) {
-                prevSongIndex = songList.indexOf(currentSong);
-                if (prevSongIndex != -1) {
-                    if (prevSongIndex > 0)
-                        --prevSongIndex;
-                    else
-                        prevSongIndex = songList.size() - 1;
-                }
-            }
-            if (prevSongIndex == -1)
-                prevSongIndex = 0;
-
-            mApp.startPlayingSong(songList.get(prevSongIndex).id, 0);
-        }
-    }
-
-    private void playNextSong(Song currentSong, List<Song> songList) {
-        if (songList.size() > 0) {
-            if (currentSong == null) {
-                int lastPlayedSongId = mPrefs.getInt(MusicPlayerApplication.PREF_KEY_LAST_PLAYED_SONG_ID, 0);
-                if (lastPlayedSongId > 0)
-                    currentSong = mMusicPlayerDAO.getSongById(lastPlayedSongId);
-            }
-
-            int nextSongIndex = -1;
-            if (currentSong != null) {
-                nextSongIndex = songList.indexOf(currentSong);
-                if (nextSongIndex != -1) {
-                    if (nextSongIndex < songList.size() - 1)
-                        ++nextSongIndex;
-                    else
-                        nextSongIndex = 0;
-                }
-            }
-            if (nextSongIndex == -1)
-                nextSongIndex = 0;
-
-            mApp.startPlayingSong(songList.get(nextSongIndex).id, 0);
-        }
-    }
-
     @Override
     public void onReceiveMessage(Message message) {
         switch (message.type) {
