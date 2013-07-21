@@ -12,10 +12,7 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
+import android.view.*;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -66,6 +63,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     private SharedPreferences mPrefs;
 
+    private MenuItem mScanSongsMenuItem;
+
     public final static String LIST_TYPE = "list_type";
     public final static String EXTRA_ID = "extra_id";
     public final static String EXTRA_TITLE = "extra_title";
@@ -73,10 +72,14 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     public final static int TYPE_BY_ARTIST = 1;
     public final static int TYPE_BY_ALBUM = 2;
 
+
     @Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		setContentView(R.layout.activity_main);
+
+        setProgressBarIndeterminateVisibility(false);
 
         mPrefs = getSharedPreferences(MusicPlayerApplication.SHARED_PREF, MODE_PRIVATE);
 
@@ -192,6 +195,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.main, menu);
+        mScanSongsMenuItem = menu.getItem(0);
 		return true;
 	}
 	
@@ -199,7 +203,11 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
             case R.id.action_scan:
+                mScanSongsMenuItem.setEnabled(false);
+                setProgressBarIndeterminateVisibility(true);
+
                 Toast.makeText(this, "开始扫描SD卡...", Toast.LENGTH_SHORT).show();
+
                 TaskExecutor.executeTask(new Runnable() {
                     @Override
                     public void run() {
@@ -210,6 +218,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                         MainActivity.this.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
+                                mScanSongsMenuItem.setEnabled(true);
+                                setProgressBarIndeterminateVisibility(false);
                                 Toast.makeText(MainActivity.this, "扫描完成！", Toast.LENGTH_SHORT).show();
                             }
                         });
