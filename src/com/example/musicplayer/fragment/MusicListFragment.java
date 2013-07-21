@@ -16,6 +16,7 @@ import com.example.musicplayer.message.Message;
 import com.example.musicplayer.pojo.Song;
 import com.example.musicplayer.service.MusicPlayerService;
 import com.example.musicplayer.util.TaskExecutor;
+import com.example.musicplayer.util.Util;
 
 import java.io.File;
 import java.util.List;
@@ -230,6 +231,7 @@ public class MusicListFragment extends Fragment implements AdapterView.OnItemCli
 
                 holder.title = (TextView) convertView.findViewById(R.id.tv_title);
                 holder.artist = (TextView) convertView.findViewById(R.id.tv_artist);
+                holder.duration = (TextView) convertView.findViewById(R.id.tv_duration);
 
                 convertView.setTag(holder);
             } else {
@@ -238,6 +240,7 @@ public class MusicListFragment extends Fragment implements AdapterView.OnItemCli
 
             Song song = mSongList.get(position);
             holder.title.setText(position + 1 + ". " + song.title);
+            holder.duration.setText("[" + Util.formatMilliseconds(song.duration, null) + "]");
             holder.artist.setText(song.artist);
 
             return convertView;
@@ -245,6 +248,7 @@ public class MusicListFragment extends Fragment implements AdapterView.OnItemCli
 
         class ViewHolder {
             TextView title;
+            TextView duration;
             TextView artist;
         }
     }

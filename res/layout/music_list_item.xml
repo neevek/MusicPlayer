@@ -13,11 +13,25 @@
             android:layout_height="wrap_content"
             android:textColor="@color/black"
             android:textSize="@dimen/listview_item_title_text_size"
-            android:text="全部音乐"
+            android:text="歌曲"
             android:padding="2dip"
             android:singleLine="true"
             android:ellipsize="end"
             android:maxLines="1"
+            />
+
+    <TextView
+            android:id="@+id/tv_duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/gray"
+            android:textSize="@dimen/listview_item_subtitle_text_size"
+            android:text="[00：00]"
+            android:padding="2dp"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:layout_below="@id/tv_title"
             />
 
     <TextView
@@ -26,12 +40,13 @@
             android:layout_height="wrap_content"
             android:textColor="@color/gray"
             android:textSize="@dimen/listview_item_subtitle_text_size"
-            android:text="全部音乐"
+            android:text="歌手"
             android:padding="2dp"
             android:singleLine="true"
             android:ellipsize="end"
             android:maxLines="1"
             android:layout_below="@id/tv_title"
+            android:layout_toRightOf="@id/tv_duration"
             />
 
 </RelativeLayout>
