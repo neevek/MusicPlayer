@@ -6,6 +6,8 @@
 
     <dimen name="bottom_bar_height">72dp</dimen>
 
+    <dimen name="main_icon_width_and_height">60dp</dimen>
+
     <dimen name="listview_item_title_text_size">14dp</dimen>
     <dimen name="listview_item_subtitle_text_size">12dp</dimen>
 </resources>

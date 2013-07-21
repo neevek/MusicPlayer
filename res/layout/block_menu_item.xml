@@ -10,9 +10,9 @@
 
     <ImageView
             android:id="@+id/menu_item_icon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/icon_music"
+            android:layout_width="@dimen/main_icon_width_and_height"
+            android:layout_height="@dimen/main_icon_width_and_height"
+            android:src="@drawable/ic_launcher"
             />
     <TextView
             android:id="@+id/menu_item_name"
@@ -21,6 +21,7 @@
             android:textColor="@color/black"
             android:textSize="@dimen/listview_item_title_text_size"
             android:text="全部音乐"
+            android:layout_marginTop="4dp"
             />
 
 </LinearLayout>

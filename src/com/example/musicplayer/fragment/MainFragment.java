@@ -35,6 +35,8 @@ public class MainFragment extends Fragment implements AdapterView.OnItemClickLis
 
     private final static String[] MENU_ITEM_TEXT = new String[]{"全部音乐", "歌手", "专辑"};
     private final static int[] MENU_ITEM_DATA_COUNT = new int[3];
+    private final static int[] MENU_ITEM_ICON = new int[] { R.drawable.icon_music, R.drawable.icon_artist, R.drawable.icon_album };
+
 
     private String mTitle;
 
@@ -131,6 +133,7 @@ public class MainFragment extends Fragment implements AdapterView.OnItemClickLis
                 holder = (ViewHolder) convertView.getTag();
             }
 
+            holder.icon.setImageResource(MENU_ITEM_ICON[position]);
             holder.name.setText(MENU_ITEM_TEXT[position] + "("+ MENU_ITEM_DATA_COUNT[position] +")");
 
             return convertView;
