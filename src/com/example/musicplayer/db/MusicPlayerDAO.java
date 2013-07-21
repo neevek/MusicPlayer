@@ -106,6 +106,47 @@ public class MusicPlayerDAO {
         return -1;
     }
 
+    public void deleteSong (int songId, int artistId, int albumId) {
+        SQLiteDatabase db;
+        Cursor cursor = null;
+        try {
+            db = mDbHelper.getWritableDatabase();
+            String sql = "DELETE FROM song_info WHERE _id=" + songId;
+            db.execSQL(sql);
+
+            sql = "SELECT song_count FROM album_info WHERE _id=" + albumId;
+            cursor = db.rawQuery(sql, null);
+            if (cursor.moveToFirst()) {
+                int songCount = cursor.getInt(0);
+                if (songCount > 1) {
+                    sql = "UPDATE album_info SET song_count=song_count-1 WHERE _id=" + albumId;
+                } else {
+                    sql = "DELETE FROM album_info WHERE _id=" + albumId;
+                }
+                db.execSQL(sql);
+            }
+
+            cursor.close();
+
+            sql = "SELECT song_count FROM artist_info WHERE _id=" + artistId;
+            cursor = db.rawQuery(sql, null);
+            if (cursor.moveToFirst()) {
+                int songCount = cursor.getInt(0);
+                if (songCount > 1) {
+                    sql = "UPDATE artist_info SET song_count=song_count-1 WHERE _id=" + albumId;
+                } else {
+                    sql = "DELETE FROM artist_info WHERE _id=" + albumId;
+                }
+                db.execSQL(sql);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null)
+                cursor.close();
+        }
+    }
+
     public int getAllMusicCount () {
         return getTotalRowCount("song_info");
     }
@@ -139,15 +180,15 @@ public class MusicPlayerDAO {
     }
 
     public List<Song> getAllSongs () {
-        return getSongsWithSQL("SELECT _id, title, artist, album, duration, file_path FROM song_info");
+        return getSongsWithSQL("SELECT _id, title, artist_id, artist, album_id, album, duration, file_path FROM song_info");
     }
 
     public List<Song> getSongsByAlbumId (int albumId) {
-        return getSongsWithSQL("SELECT _id, title, artist, album, duration, file_path FROM song_info WHERE album_id=" + albumId);
+        return getSongsWithSQL("SELECT _id, title, artist_id, artist, album_id, album, duration, file_path FROM song_info WHERE album_id=" + albumId);
     }
 
     public List<Song> getSongsByArtistId (int artistId) {
-        return getSongsWithSQL("SELECT _id, title, artist, album, duration, file_path FROM song_info WHERE artist_id=" + artistId);
+        return getSongsWithSQL("SELECT _id, title, artist_id, artist, album_id, album, duration, file_path FROM song_info WHERE artist_id=" + artistId);
     }
 
     private List<Song> getSongsWithSQL (String sql) {
@@ -162,12 +203,14 @@ public class MusicPlayerDAO {
                 while (!cursor.isAfterLast()) {
                     int id = cursor.getInt(0);
                     String title = cursor.getString(1);
-                    String artist = cursor.getString(2);
-                    String album = cursor.getString(3);
-                    int duration = cursor.getInt(4);
-                    String filePath = cursor.getString(5);
+                    int artistId = cursor.getInt(2);
+                    String artist = cursor.getString(3);
+                    int albumId = cursor.getInt(4);
+                    String album = cursor.getString(5);
+                    int duration = cursor.getInt(6);
+                    String filePath = cursor.getString(7);
 
-                    list.add(new Song (id, title, artist, album, duration, filePath));
+                    list.add(new Song (id, title, artistId, artist, albumId, album, duration, filePath));
 
                     cursor.moveToNext();
                 }
@@ -219,17 +262,19 @@ public class MusicPlayerDAO {
         Song song = null;
         try {
             db = mDbHelper.getReadableDatabase();
-            String sql = "SELECT _id, title, artist, album, duration, file_path FROM song_info WHERE _id=" + id;
+            String sql = "SELECT _id, title, artist_id, artist, album_id, album, duration, file_path FROM song_info WHERE _id=" + id;
             cursor = db.rawQuery(sql, null);
 
             if (cursor.moveToFirst()) {
                 String title = cursor.getString(1);
-                String artist = cursor.getString(2);
-                String album = cursor.getString(3);
-                int duration = cursor.getInt(4);
-                String filePath = cursor.getString(5);
+                int artistId = cursor.getInt(2);
+                String artist = cursor.getString(3);
+                int albumId = cursor.getInt(4);
+                String album = cursor.getString(5);
+                int duration = cursor.getInt(6);
+                String filePath = cursor.getString(7);
 
-                song = new Song (id, title, artist, album, duration, filePath);
+                song = new Song (id, title, artistId, artist, albumId, album, duration, filePath);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -270,4 +315,5 @@ public class MusicPlayerDAO {
         Util.sortArtistList(list);
         return list;
     }
+
 }

@@ -38,15 +38,12 @@ public class AlbumListFragment extends Fragment implements AdapterView.OnItemCli
 
     private MusicPlayerDAO mMusicPlayerDAO;
 
-    private String mTitle;
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         mApp = MusicPlayerApplication.getInstance();
 
-        mTitle = getResources().getString(R.string.title_album);
         mMusicPlayerDAO = mApp.getMusicPlayerDAO();
 
         mListView = (ListView)LayoutInflater.from(getActivity()).inflate(R.layout.music_list, null, false);
@@ -55,9 +52,12 @@ public class AlbumListFragment extends Fragment implements AdapterView.OnItemCli
         TaskExecutor.executeTask(new Runnable() {
             @Override
             public void run() {
+                if (isDetached())
+                    return;
+
                 mAlbumList = mMusicPlayerDAO.getAlbums();
 
-                getActivity().runOnUiThread(new Runnable() {
+                mApp.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         mAdapter = new AlbumListAdapter();
@@ -76,7 +76,7 @@ public class AlbumListFragment extends Fragment implements AdapterView.OnItemCli
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        getActivity().setTitle(mTitle);
+        getActivity().setTitle(R.string.title_album);
 
         if (mListView != null && mListView.getParent() != null) {
             ((ViewGroup)mListView.getParent()).removeView(mListView);

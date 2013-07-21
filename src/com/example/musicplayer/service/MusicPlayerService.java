@@ -183,10 +183,30 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
                 if (mMediaPlayer.isPlaying())
                     mMediaPlayer.pause();
 
-                if (mCurrentSong != null)
+                if (mCurrentSong != null) {
+                    getSharedPreferences(MusicPlayerApplication.SHARED_PREF, MODE_PRIVATE).edit()
+                            .putInt(MusicPlayerApplication.PREF_KEY_LAST_PLAYED_SONG_ID, mCurrentSong.id)
+                            .putInt(MusicPlayerApplication.PREF_KEY_LAST_PLAYED_SONG_PROGRESS, getPlayingProgress())
+                            .commit();
+
                     mMessageePump.broadcastMessage(Message.Type.ON_PAUSE_PLAYBACK, mCurrentSong);
+                }
             }
         });
+    }
+
+    public void stopPlaybackDirectly() {
+        if (mMediaPlayer.isPlaying())
+            mMediaPlayer.stop();
+
+        if (mCurrentSong != null) {
+            getSharedPreferences(MusicPlayerApplication.SHARED_PREF, MODE_PRIVATE).edit()
+                    .remove(MusicPlayerApplication.PREF_KEY_LAST_PLAYED_SONG_ID)
+                    .remove(MusicPlayerApplication.PREF_KEY_LAST_PLAYED_SONG_PROGRESS)
+                    .commit();
+
+            mMessageePump.broadcastMessage(Message.Type.ON_DELETE_CURRENT_SONG, mCurrentSong);
+        }
     }
 
     public void resumePlayback() {

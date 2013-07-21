@@ -1,20 +1,26 @@
 package com.example.musicplayer.fragment;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.widget.*;
 import com.example.musicplayer.MainActivity;
 import com.example.musicplayer.MusicPlayerApplication;
 import com.example.musicplayer.R;
 import com.example.musicplayer.db.MusicPlayerDAO;
+import com.example.musicplayer.message.Message;
 import com.example.musicplayer.pojo.Song;
+import com.example.musicplayer.service.MusicPlayerService;
 import com.example.musicplayer.util.TaskExecutor;
 
+import java.io.File;
 import java.util.List;
+
+import static android.app.Dialog.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -37,6 +43,10 @@ public class MusicListFragment extends Fragment implements AdapterView.OnItemCli
 
     private String mTitle;
 
+    private final static int CONTEXT_MENU_ITEM_DELETE = 1;
+
+    private MusicPlayerService mMusicPlayerService;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,6 +64,9 @@ public class MusicListFragment extends Fragment implements AdapterView.OnItemCli
         TaskExecutor.executeTask(new Runnable() {
             @Override
             public void run() {
+                if (isDetached())
+                    return;
+
                 List<Song> songList = null;
                 switch (type) {
                     case MainActivity.TYPE_ALL_MUSIC:
@@ -67,13 +80,17 @@ public class MusicListFragment extends Fragment implements AdapterView.OnItemCli
                         break;
                 }
 
+                if (getActivity() == null)
+                    return;
+
                 mApp.setCurrentPlayList(songList);
 
                 final List<Song> finalSongList = songList;
-                getActivity().runOnUiThread(new Runnable() {
+                mApp.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         mSongList = finalSongList;
+
                         if (mAdapter == null)
                             mAdapter = new MusicListAdapter();
                         mListView.setAdapter(mAdapter);
@@ -106,8 +123,86 @@ public class MusicListFragment extends Fragment implements AdapterView.OnItemCli
         mListView = (ListView) mLayout;
         mListView.setOnItemClickListener(this);
 
+        registerForContextMenu(mListView);
+
 
         return mLayout;
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        menu.addSubMenu(Menu.NONE, CONTEXT_MENU_ITEM_DELETE, Menu.NONE, "删除歌曲");
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+
+        switch (item.getItemId()) {
+            case CONTEXT_MENU_ITEM_DELETE:
+                final Song song = mSongList.get(info.position);
+                TaskExecutor.executeTask(new Runnable() {
+                    @Override
+                    public void run() {
+                        // delete song from database
+                        mMusicPlayerDAO.deleteSong(song.id, song.artistId, song.albumId);
+
+                        // delete song from list in memory
+                        mSongList.remove(song);
+                        List<Song> cachedSongList = mApp.getCachedAllMusicSongList(false);
+                        if (cachedSongList != null && mSongList != mApp.getCachedAllMusicSongList(false))
+                            cachedSongList.remove(song);
+
+                        mApp.getMessagePump().broadcastMessage(Message.Type.REDRAW_LIST, null);
+
+                        // redraw the current listview and show a dialog to ask
+                        // if the user wants to delete the underlying file
+                        mApp.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                mAdapter.notifyDataSetChanged();
+                                showAskDeleteFileDialog();
+                            }
+
+                            private void showAskDeleteFileDialog() {
+                                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                                builder.setTitle("删除歌曲")
+                                        .setMessage("同时删除目标文件吗？")
+                                        .setCancelable(false)
+                                        .setPositiveButton("是", new OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int id) {
+                                                TaskExecutor.executeTask(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        Song currentSong = mMusicPlayerService.getCurrentSong();
+                                                        if (currentSong != null && currentSong.id == song.id)
+                                                            mMusicPlayerService.stopPlaybackDirectly();
+
+                                                        File file = new File(song.filePath);
+                                                        if (file.exists())
+                                                            file.delete();
+                                                    }
+                                                });
+                                            }
+                                        })
+                                        .setNegativeButton("否", new OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int id) {
+                                                dialog.cancel();
+                                            }
+                                        });
+                                AlertDialog alert = builder.create();
+                                alert.show();
+                            }
+                        });
+                    }
+                });
+                break;
+        }
+        return true;
+    }
+
+    public void setMusicPlayerService (MusicPlayerService service) {
+        mMusicPlayerService = service;
     }
 
     private class MusicListAdapter extends BaseAdapter {

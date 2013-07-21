@@ -36,7 +36,6 @@ import com.example.musicplayer.util.TaskExecutor;
 import com.example.musicplayer.util.Util;
 
 import java.io.File;
-import java.util.List;
 
 public class MainActivity extends FragmentActivity implements View.OnClickListener, MessageCallback {
     private final static boolean DEBUG = true;
@@ -103,6 +102,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
                 mMusicPlayerService = ((MusicPlayerServiceBinder) service).getMusicPlayerService();
+                mMusicListFragment.setMusicPlayerService(mMusicPlayerService);
 
                 boolean isPlaying = mMusicPlayerService.isPlayingSong();
                 mBtnPlayAndPause.setImageResource(isPlaying ? R.drawable.icon_pause_selector : R.drawable.icon_play_selector);
@@ -148,6 +148,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         mMessagePump.register(Message.Type.ON_RESUME_PLAYBACK, this);
         mMessagePump.register(Message.Type.ON_PAUSE_PLAYBACK, this);
         mMessagePump.register(Message.Type.ON_UPDATE_PLAYING_PROGRESS, this);
+        mMessagePump.register(Message.Type.ON_DELETE_CURRENT_SONG, this);
 
         mMessagePump.register(Message.Type.SHOW_FRAGMENT_MUSIC_LIST, this);
         mMessagePump.register(Message.Type.SHOW_FRAGMENT_ARTIST_LIST, this);
@@ -235,7 +236,11 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     private void scanMP3Files () {
         if (DEBUG) Log.d(TAG, ">>>> start scanning for mp3 files...");
         String rootDir = "/sdcard" ;
-        traverseScanMP3Files(new File(rootDir));
+
+        synchronized (MusicPlayerApplication.INIT_CACHED_SONG_LIST_SYNC) {
+            traverseScanMP3Files(new File(rootDir));
+        }
+
         if (DEBUG) Log.d(TAG, ">>>> done scanning for mp3 files...");
     }
 
@@ -373,6 +378,9 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
             case SHOW_FRAGMENT_ALBUM_LIST:
                 showFragment(mAlbumListFragment);
                 break;
+            case ON_DELETE_CURRENT_SONG:
+                setInfoForCurSong(null, 0);
+                break;
         }
     }
 
@@ -383,10 +391,17 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     }
 
     private void setInfoForCurSong(Song song, int progress) {
-        mCurSongTitle.setText(song.title);
-        mCurArtist.setText(song.artist);
-        mCurSongProgress.setText(Util.formatMilliseconds(progress, null));
-        mCurSongDuration.setText("/" + Util.formatMilliseconds(song.duration, null));
+        if (song != null) {
+            mCurSongTitle.setText(song.title);
+            mCurArtist.setText(song.artist);
+            mCurSongProgress.setText(Util.formatMilliseconds(progress, null));
+            mCurSongDuration.setText("/" + Util.formatMilliseconds(song.duration, null));
+        } else {
+            mCurSongTitle.setText("未选歌曲");
+            mCurArtist.setText("");
+            mCurSongProgress.setText("00:00");
+            mCurSongDuration.setText("/00:00");
+        }
     }
 
     private void onResumePlayback (Song song) {
@@ -398,10 +413,6 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
         if (DEBUG) Log.d(TAG, ">>>> paused, current progress: " + mMusicPlayerService.getPlayingProgress());
 
-        mPrefs.edit()
-                .putInt(MusicPlayerApplication.PREF_KEY_LAST_PLAYED_SONG_ID, mMusicPlayerService.getCurrentSong().id)
-                .putInt(MusicPlayerApplication.PREF_KEY_LAST_PLAYED_SONG_PROGRESS, mMusicPlayerService.getPlayingProgress())
-                .commit();
     }
 
     private StringBuilder mProgressBuffer = new StringBuilder();

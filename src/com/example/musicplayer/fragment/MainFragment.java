@@ -3,8 +3,6 @@ package com.example.musicplayer.fragment;
 import android.os.Bundle;
 import android.os.Looper;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +12,7 @@ import com.example.musicplayer.MusicPlayerApplication;
 import com.example.musicplayer.R;
 import com.example.musicplayer.db.MusicPlayerDAO;
 import com.example.musicplayer.message.Message;
+import com.example.musicplayer.message.MessageCallback;
 import com.example.musicplayer.message.MessageData2;
 import com.example.musicplayer.pojo.SongGroup;
 import com.example.musicplayer.util.TaskExecutor;
@@ -24,7 +23,7 @@ import com.example.musicplayer.util.TaskExecutor;
  * Date: 7/20/13
  * Time: 10:12 AM
  */
-public class MainFragment extends Fragment implements AdapterView.OnItemClickListener {
+public class MainFragment extends Fragment implements AdapterView.OnItemClickListener, MessageCallback {
     private View mLayout;
 
     private MusicPlayerApplication mApp;
@@ -50,6 +49,7 @@ public class MainFragment extends Fragment implements AdapterView.OnItemClickLis
         super.onCreate(savedInstanceState);
 
         mTitle = getResources().getString(R.string.app_name);
+        mApp.getMessagePump().register(Message.Type.REDRAW_LIST, this);
     }
 
     @Override
@@ -81,6 +81,12 @@ public class MainFragment extends Fragment implements AdapterView.OnItemClickLis
         });
 
         return mLayout;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mApp.getMessagePump().unregister(this);
     }
 
     public void setItemDataCounts(boolean redraw) {
@@ -156,6 +162,15 @@ public class MainFragment extends Fragment implements AdapterView.OnItemClickLis
                 break;
             case 2:
                 mApp.getMessagePump().broadcastMessage(Message.Type.SHOW_FRAGMENT_ALBUM_LIST, null);
+                break;
+        }
+    }
+
+    @Override
+    public void onReceiveMessage(Message message) {
+        switch (message.type) {
+            case REDRAW_LIST:
+                setItemDataCounts(true);
                 break;
         }
     }

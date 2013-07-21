@@ -14,14 +14,18 @@ public class Song implements Serializable {
     public int id;
     public String title;
     public String artist;
+    public int artistId;
     public String album;
+    public int albumId;
     public int duration;
     public String filePath;
 
-    public Song (int id, String title, String artist, String album, int duration, String filePath) {
+    public Song (int id, String title, int artistId, String artist, int albumId, String album, int duration, String filePath) {
         this.id = id;
         this.title = title;
+        this.artistId = artistId;
         this.artist = artist;
+        this.albumId = albumId;
         this.album = album;
         this.duration = duration;
         this.filePath = filePath;

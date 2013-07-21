@@ -69,7 +69,7 @@ public class MusicPlayerApplication extends Application {
         return mCurrentPlayList;
     }
 
-    private final static Object INIT_CACHED_SONG_LIST_SYNC = new Object();
+    public final static Object INIT_CACHED_SONG_LIST_SYNC = new Object();
     public List<Song> getCachedAllMusicSongList(boolean init) {
         if (init) {
             synchronized (INIT_CACHED_SONG_LIST_SYNC) {
@@ -87,5 +87,9 @@ public class MusicPlayerApplication extends Application {
         intent.putExtra("songId", songId);
         intent.putExtra("progress", progress);
         startService(intent);
+    }
+
+    public void runOnUiThread (Runnable action) {
+        mMainHandler.sendAction(action);
     }
 }

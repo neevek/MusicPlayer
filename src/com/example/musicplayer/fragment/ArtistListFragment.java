@@ -38,15 +38,11 @@ public class ArtistListFragment extends Fragment implements AdapterView.OnItemCl
 
     private MusicPlayerDAO mMusicPlayerDAO;
 
-    private String mTitle;
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         mApp = MusicPlayerApplication.getInstance();
-
-        mTitle = getResources().getString(R.string.title_artist);
 
         mMusicPlayerDAO = mApp.getMusicPlayerDAO();
 
@@ -56,9 +52,12 @@ public class ArtistListFragment extends Fragment implements AdapterView.OnItemCl
         TaskExecutor.executeTask(new Runnable() {
             @Override
             public void run() {
+                if (isDetached())
+                    return;
+
                 mArtistList = mMusicPlayerDAO.getArtists();
 
-                getActivity().runOnUiThread(new Runnable() {
+                mApp.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         mAdapter = new ArtistListAdapter();
