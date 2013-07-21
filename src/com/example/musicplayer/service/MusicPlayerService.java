@@ -74,8 +74,6 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
 
         Intent openMainAppIntent = new Intent(this, MainActivity.class);
         openMainAppIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        // have no idea why i need this type, it just makes it work
-//        openMainAppIntent.setType("helloworld");
         mOpenMainAppPendingIntent = PendingIntent.getActivity(this, 0, openMainAppIntent, 0);
     }
 
@@ -120,12 +118,9 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
             mMediaPlayer.start();
 
             mMessageePump.broadcastMessage(Message.Type.ON_START_PLAYBACK, song);
-//
-//            public Notification(Context context, int icon, CharSequence tickerText, long when,
-//            CharSequence contentTitle, CharSequence contentText, Intent contentIntent)
 
             notification = new Notification();
-            notification.icon = R.drawable.ic_launcher;
+            notification.icon = R.drawable.notification_icon;
             notification.flags &= ~Notification.FLAG_AUTO_CANCEL;
             notification.tickerText = "正在播放 " + song.title;
 
