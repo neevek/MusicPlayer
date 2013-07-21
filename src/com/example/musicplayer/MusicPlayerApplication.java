@@ -82,6 +82,10 @@ public class MusicPlayerApplication extends Application {
         return mCachedSongList;
     }
 
+    public void clearCachedAllMusicSongList () {
+        mCachedSongList = null;
+    }
+
     public void startPlayingSong (int songId, int progress) {
         Intent intent = new Intent(this, MusicPlayerService.class);
         intent.putExtra("songId", songId);

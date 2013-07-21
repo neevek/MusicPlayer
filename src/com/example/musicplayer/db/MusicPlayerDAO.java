@@ -316,4 +316,16 @@ public class MusicPlayerDAO {
         return list;
     }
 
+    public void truncateAllSongRelatedTables ()  {
+        SQLiteDatabase db;
+        try {
+            db = mDbHelper.getReadableDatabase();
+            db.execSQL("DELETE FROM song_info");
+            db.execSQL("DELETE FROM artist_info");
+            db.execSQL("DELETE FROM album_info");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }

@@ -75,8 +75,9 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     @Override
 	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
+        // call requestWindowFeature before super.onCreate(); see https://groups.google.com/d/msg/actionbarsherlock/dHIJn1qbkFE/bEzSg2haGZMJ
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
         setProgressBarIndeterminateVisibility(false);
@@ -211,8 +212,11 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                 TaskExecutor.executeTask(new Runnable() {
                     @Override
                     public void run() {
+                        mMusicPlayerDAO.truncateAllSongRelatedTables();
+
                         scanMP3Files();
 
+                        mApp.clearCachedAllMusicSongList();
                         mMainFragment.setItemDataCounts(true);
 
                         MainActivity.this.runOnUiThread(new Runnable() {
