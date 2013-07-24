@@ -108,7 +108,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                 mMusicPlayerService = ((MusicPlayerServiceBinder) service).getMusicPlayerService();
                 mMusicListFragment.setMusicPlayerService(mMusicPlayerService);
 
-                boolean isPlaying = mMusicPlayerService.isPlayingSong();
+                boolean isPlaying = mMusicPlayerService.isPlaying();
                 mBtnPlayAndPause.setImageResource(isPlaying ? R.drawable.icon_pause_selector : R.drawable.icon_play_selector);
 
                 Song currentSong = mMusicPlayerService.getCurrentSong();
@@ -344,7 +344,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                 break;
             }
             case R.id.btn_play_and_pause:
-                if (mMusicPlayerService.isPlayingSong()) {
+                if (mMusicPlayerService.isPlaying()) {
                     mMusicPlayerService.pausePlayback();
                     mPrefs.edit()
                             .putInt(MusicPlayerApplication.PREF_KEY_LAST_PLAYED_SONG_ID, mMusicPlayerService.getCurrentSong().id)
@@ -473,7 +473,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         super.onDestroy();
 
         unbindService(mServiceConnection);
-        if (!mMusicPlayerService.isPlayingSong())
+        if (!mMusicPlayerService.isPlaying())
             stopService(new Intent(this, MusicPlayerService.class));
     }
 }

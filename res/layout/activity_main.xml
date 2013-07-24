@@ -7,7 +7,7 @@
     >
 
     <FrameLayout
-            android:id="@+id/container"
+        android:id="@+id/container"
         android:layout_width="fill_parent"
         android:layout_height="0dip"
         android:layout_weight="1"
@@ -20,99 +20,99 @@
         />
 
     <LinearLayout
-            android:layout_width="fill_parent"
-            android:layout_height="@dimen/bottom_bar_height"
-            android:gravity="center_vertical"
-            android:padding="8dip"
-            android:baselineAligned="false">
+        android:layout_width="fill_parent"
+        android:layout_height="@dimen/bottom_bar_height"
+        android:gravity="center_vertical"
+        android:padding="8dip"
+        android:baselineAligned="false">
 
         <RelativeLayout
-                android:layout_width="0dp"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:paddingRight="8dp"
+            >
+
+            <TextView
+                android:id="@+id/tv_song_title"
+                android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:paddingRight="8dp"
-                >
+                android:textColor="@color/black"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="未选歌曲"
+                android:textSize="@dimen/listview_item_title_text_size"
+                />
 
             <TextView
-                    android:id="@+id/tv_song_title"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/black"
-                    android:singleLine="true"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:text="未选歌曲"
-                    android:textSize="@dimen/listview_item_title_text_size"
-                    />
+                android:id="@+id/tv_artist"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/gray"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text=""
+                android:layout_below="@id/tv_song_title"
+                />
 
             <TextView
-                    android:id="@+id/tv_artist"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/gray"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:text=""
-                    android:layout_below="@id/tv_song_title"
-                    />
+                android:id="@+id/tv_song_progress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/gray"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="00:00"
+                android:layout_below="@id/tv_artist"
+                />
 
             <TextView
-                    android:id="@+id/tv_song_progress"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/gray"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:text="00:00"
-                    android:layout_below="@id/tv_artist"
-                    />
-
-            <TextView
-                    android:id="@+id/tv_song_duration"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/gray"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:text="/00:00"
-                    android:layout_below="@id/tv_artist"
-                    android:layout_toRightOf="@id/tv_song_progress"
-                    />
+                android:id="@+id/tv_song_duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/gray"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="/00:00"
+                android:layout_below="@id/tv_artist"
+                android:layout_toRightOf="@id/tv_song_progress"
+                />
         </RelativeLayout>
 
 
         <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            >
+            <ImageButton
+                android:id="@+id/btn_play_prev_song"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                >
-            <ImageButton
-                    android:id="@+id/btn_play_prev_song"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/icon_prev_song_selector"
-                    android:background="@null"
-                    android:layout_marginRight="8dp"
-                    android:contentDescription=""/>
+                android:src="@drawable/icon_prev_song_selector"
+                android:background="@null"
+                android:layout_marginRight="8dp"
+                android:contentDescription=""/>
 
             <ImageButton
-                    android:id="@+id/btn_play_and_pause"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/icon_play_selector"
-                    android:background="@null"
-                    android:layout_marginRight="8dp"
-                    android:contentDescription=""/>
+                android:id="@+id/btn_play_and_pause"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/icon_play_selector"
+                android:background="@null"
+                android:layout_marginRight="8dp"
+                android:contentDescription=""/>
 
             <ImageButton
-                    android:id="@+id/btn_play_next_song"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/icon_next_song_selector"
-                    android:background="@null"
-                    android:layout_marginRight="4dp"
-                    android:contentDescription=""/>
+                android:id="@+id/btn_play_next_song"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/icon_next_song_selector"
+                android:background="@null"
+                android:layout_marginRight="4dp"
+                android:contentDescription=""/>
 
-            </LinearLayout>
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>

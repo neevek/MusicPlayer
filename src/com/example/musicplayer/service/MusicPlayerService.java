@@ -9,6 +9,8 @@ import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.IBinder;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 import com.example.musicplayer.MainActivity;
@@ -29,7 +31,7 @@ import java.util.List;
  * Date: 7/20/13
  * Time: 5:58 PM
  */
-public class MusicPlayerService extends Service implements MediaPlayer.OnCompletionListener {
+public class MusicPlayerService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener {
     private final static boolean DEBUG = true;
     private final static String TAG = MusicPlayerService.class.getSimpleName();
 
@@ -49,6 +51,11 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     private Notification notification;
     private StringBuilder mProgressBuffer = new StringBuilder();
 
+    private TelephonyManager mTelephonyManager;
+    private boolean mStoppedByPhoneCalls;
+
+    private boolean mMediaPlayerPrepared;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -60,6 +67,7 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
         mMediaPlayer = new MediaPlayer();
         mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         mMediaPlayer.setOnCompletionListener(this);
+        mMediaPlayer.setOnPreparedListener(this);
 
         mMessageePump = mApp.getMessagePump();
 
@@ -75,6 +83,10 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
         Intent openMainAppIntent = new Intent(this, MainActivity.class);
         openMainAppIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         mOpenMainAppPendingIntent = PendingIntent.getActivity(this, 0, openMainAppIntent, 0);
+
+        mTelephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+
+        mTelephonyManager.listen(new MyPhoneStateListener(), PhoneStateListener.LISTEN_CALL_STATE);
     }
 
     @Override
@@ -107,7 +119,7 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     private void playSong(Song song, int progress) {
         if (DEBUG) Log.d(TAG, ">>>> start playing: " + song.title);
         try {
-            if (mMediaPlayer.isPlaying()) {
+            if (isPlaying()) {
                 mMediaPlayer.stop();
             }
 
@@ -154,6 +166,11 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
     @Override
+    public void onPrepared(MediaPlayer mediaPlayer) {
+        mMediaPlayerPrepared = true;
+    }
+
+    @Override
     public void onCompletion(MediaPlayer mp) {
         List<Song> playList = mApp.getCurrentPlayList();
         int songIndex = playList.indexOf(mCurrentSong);
@@ -175,7 +192,7 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
         mActionQueue.scheduleTask(new Runnable() {
             @Override
             public void run() {
-                if (mMediaPlayer.isPlaying())
+                if (isPlaying())
                     mMediaPlayer.pause();
 
                 if (mCurrentSong != null) {
@@ -191,7 +208,7 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
     public void stopPlaybackDirectly() {
-        if (mMediaPlayer.isPlaying())
+        if (isPlaying())
             mMediaPlayer.stop();
 
         if (mCurrentSong != null) {
@@ -208,7 +225,7 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
         mActionQueue.scheduleTask(new Runnable() {
             @Override
             public void run() {
-                if (!mMediaPlayer.isPlaying())
+                if (!isPlaying())
                     mMediaPlayer.start();
 
                 if (mCurrentSong != null)
@@ -267,8 +284,8 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
         return mCurrentSong;
     }
 
-    public boolean isPlayingSong () {
-        return mMediaPlayer.isPlaying();
+    public boolean isPlaying() {
+        return mMediaPlayerPrepared && mMediaPlayer.isPlaying();
     }
 
     public int getPlayingProgress () {
@@ -299,7 +316,7 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
                     continue;
                 }
 
-                if (!mMediaPlayer.isPlaying())
+                if (!isPlaying())
                     continue;
 
                 mLastPlayingProgress = mMediaPlayer.getCurrentPosition();
@@ -309,6 +326,33 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
                 mNotificationManager.notify(1, notification);
 
                 mMessageePump.broadcastMessage(Message.Type.ON_UPDATE_PLAYING_PROGRESS, mLastPlayingProgress);
+            }
+        }
+    }
+
+    class MyPhoneStateListener extends PhoneStateListener {
+        @Override
+        public void onCallStateChanged(int state, String incomingNumber) {
+            if (isPlaying() || mStoppedByPhoneCalls) {
+                switch (state) {
+                    case TelephonyManager.CALL_STATE_RINGING:
+                    case TelephonyManager.CALL_STATE_OFFHOOK:
+                        pausePlaybackForCallEvents();
+                        break;
+                    case TelephonyManager.CALL_STATE_IDLE:
+                        if (mStoppedByPhoneCalls) {
+                            mStoppedByPhoneCalls = false;
+                            resumePlayback();
+                        }
+                        break;
+                }
+            }
+        }
+
+        private void pausePlaybackForCallEvents() {
+            if (isPlaying()) {
+                mStoppedByPhoneCalls = true;
+                pausePlayback();
             }
         }
     }
