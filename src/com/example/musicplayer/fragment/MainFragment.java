@@ -30,7 +30,7 @@ public class MainFragment extends Fragment implements AdapterView.OnItemClickLis
     private MusicPlayerDAO mMusicPlayerDAO;
 
     private GridView mGridView;
-    private BlockMenuAdapter mAdapter;
+    private MainGridViewItemAdapter mAdapter;
 
     private final static String[] MENU_ITEM_TEXT = new String[]{"全部音乐", "歌手", "专辑"};
     private final static int[] MENU_ITEM_DATA_COUNT = new int[3];
@@ -73,7 +73,7 @@ public class MainFragment extends Fragment implements AdapterView.OnItemClickLis
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        mAdapter = new BlockMenuAdapter();
+                        mAdapter = new MainGridViewItemAdapter();
                         mGridView.setAdapter(mAdapter);
                     }
                 });
@@ -108,7 +108,7 @@ public class MainFragment extends Fragment implements AdapterView.OnItemClickLis
     }
 
 
-    private class BlockMenuAdapter extends BaseAdapter {
+    private class MainGridViewItemAdapter extends BaseAdapter {
         @Override
         public int getCount() {
             return MENU_ITEM_TEXT.length;
