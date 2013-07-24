@@ -5,13 +5,14 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Intent;
+import android.content.*;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.IBinder;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.widget.Toast;
 import com.example.musicplayer.MainActivity;
 import com.example.musicplayer.MusicPlayerApplication;
@@ -23,6 +24,7 @@ import com.example.musicplayer.pojo.Song;
 import com.example.musicplayer.sync.TaskQueue;
 import com.example.musicplayer.util.Util;
 
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 /**
@@ -56,9 +58,15 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
 
     private boolean mMediaPlayerPrepared;
 
+    private ComponentName mMediaButtonBroadcastReceiverComponentName;
+
+    private static WeakReference<MusicPlayerService> mMusicPlayerServiceRef;
+
     @Override
     public void onCreate() {
         super.onCreate();
+
+        mMusicPlayerServiceRef = new WeakReference<MusicPlayerService>(this);
 
         mApp = MusicPlayerApplication.getInstance();
 
@@ -87,6 +95,9 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
         mTelephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
 
         mTelephonyManager.listen(new MyPhoneStateListener(), PhoneStateListener.LISTEN_CALL_STATE);
+
+        mMediaButtonBroadcastReceiverComponentName = new ComponentName(this, MediaButtonBroadcastReceiver.class);
+        ((AudioManager) getSystemService(AUDIO_SERVICE)).registerMediaButtonEventReceiver(mMediaButtonBroadcastReceiverComponentName);
     }
 
     @Override
@@ -156,6 +167,11 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
     @Override
     public void onDestroy() {
         super.onDestroy();
+
+        mMusicPlayerServiceRef.clear();
+
+        ((AudioManager) getSystemService(AUDIO_SERVICE)).unregisterMediaButtonEventReceiver(mMediaButtonBroadcastReceiverComponentName);
+        mTelephonyManager.listen(null, 0);
 
         mPlayingProgressNotifier.stopThread();
 
@@ -353,6 +369,58 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
             if (isPlaying()) {
                 mStoppedByPhoneCalls = true;
                 pausePlayback();
+            }
+        }
+    }
+
+    public static class MediaButtonBroadcastReceiver extends BroadcastReceiver {
+        private static long mFirstActionDownTime = 0;
+        private static long mLastUpTime= 0;
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (Intent.ACTION_MEDIA_BUTTON.equals(intent.getAction())) {
+                KeyEvent event = intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
+                int keyCode = event.getKeyCode();
+
+                if (KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE == keyCode || event.getKeyCode() == keyCode) {
+                    int action = event.getAction();
+
+                    if (action == KeyEvent.ACTION_DOWN && mFirstActionDownTime == 0) {
+                        mFirstActionDownTime = event.getDownTime();
+                    } else if (action == KeyEvent.ACTION_UP) {
+                        if (mLastUpTime == 0 || event.getEventTime() - mLastUpTime > 500) {
+                            if (event.getEventTime() - mFirstActionDownTime >= 800) {
+                                handleLongPress();
+                                if (DEBUG) Log.d(TAG, ">>>> media button long press");
+                            } else {
+                                handleNormalPress();
+                                if (DEBUG) Log.d(TAG, ">>>> media button normal press");
+                            }
+                        }
+
+                        mFirstActionDownTime = 0;
+                        mLastUpTime = event.getEventTime();
+                    }
+
+                }
+            }
+        }
+
+        private void handleLongPress () {
+            MusicPlayerService musicPlayerService = mMusicPlayerServiceRef.get();
+            if (musicPlayerService != null) {
+                musicPlayerService.playNextSong();
+            }
+        }
+
+        private void handleNormalPress () {
+            MusicPlayerService musicPlayerService = mMusicPlayerServiceRef.get();
+            if (musicPlayerService != null) {
+                if (musicPlayerService.isPlaying())
+                    musicPlayerService.pausePlayback();
+                else
+                    musicPlayerService.resumePlayback();
             }
         }
     }
