@@ -376,6 +376,7 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
     public static class MediaButtonBroadcastReceiver extends BroadcastReceiver {
         private static long mFirstActionDownTime = 0;
         private static long mLastUpTime= 0;
+        private static boolean mHandledLongPress = false;
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -386,15 +387,16 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
                 if (KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE == keyCode || event.getKeyCode() == keyCode) {
                     int action = event.getAction();
 
-                    if (action == KeyEvent.ACTION_DOWN && mFirstActionDownTime == 0) {
-                        mFirstActionDownTime = event.getDownTime();
+                    if (action == KeyEvent.ACTION_DOWN) {
+                        if (mFirstActionDownTime == 0)
+                            mFirstActionDownTime = event.getDownTime();
                     } else if (action == KeyEvent.ACTION_UP) {
                         if (mLastUpTime == 0 || event.getEventTime() - mLastUpTime > 500) {
                             if (event.getEventTime() - mFirstActionDownTime >= 800) {
-                                handleLongPress();
+                                handleNormalPress();
                                 if (DEBUG) Log.d(TAG, ">>>> media button long press");
                             } else {
-                                handleNormalPress();
+                                handleLongPress();
                                 if (DEBUG) Log.d(TAG, ">>>> media button normal press");
                             }
                         }
