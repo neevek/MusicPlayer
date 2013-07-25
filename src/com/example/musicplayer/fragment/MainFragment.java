@@ -70,7 +70,7 @@ public class MainFragment extends Fragment implements AdapterView.OnItemClickLis
             @Override
             public void run() {
                 setItemDataCounts(false);
-                getActivity().runOnUiThread(new Runnable() {
+                mApp.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         mAdapter = new MainGridViewItemAdapter();
@@ -98,7 +98,7 @@ public class MainFragment extends Fragment implements AdapterView.OnItemClickLis
             if (Looper.myLooper() == Looper.getMainLooper())
                 mAdapter.notifyDataSetChanged();
             else
-                getActivity().runOnUiThread(new Runnable() {
+                mApp.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         mAdapter.notifyDataSetChanged();

@@ -272,8 +272,10 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		switch (keyCode) {
 		case KeyEvent.KEYCODE_BACK:
-            showDialog(DIALOG_EXIT_ID);
-            return true;
+            if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
+                showDialog(DIALOG_EXIT_ID);
+                return true;
+            }
 		}
 		return super.onKeyDown(keyCode, event);
 	}
