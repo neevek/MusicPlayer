@@ -297,39 +297,46 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                     traverseScanMP3Files(file);
                 } else {
                     if (file.getName().toLowerCase().endsWith("mp3")) {
-                        String filePath = file.getAbsolutePath();
-
-                        MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-                        mmr.setDataSource(filePath);
-
-                        String duration = Util.ensureNotNull(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION), "");
-
-                        int intDuration = 0;
-                        if (duration != null && duration.length() > 0)
-                            intDuration = Integer.parseInt(duration);
-
-                        if (intDuration == 0)
-                            continue;
-
-                        String title = Util.ensureNotNull(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE), file.getName());
-                        String artist = Util.ensureNotNull(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST), "");
-                        String album = Util.ensureNotNull(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM), "");
-
-                        int albumId = 0;
-                        int artistId = 0;
-                        if (!album.equals(""))
-                            albumId = mMusicPlayerDAO.addAlbum(album);
-                        if (!artist.equals(""))
-                            artistId = mMusicPlayerDAO.addArtist(artist);
-
-                        mMusicPlayerDAO.addSong(title, artistId, artist, albumId, album, intDuration, filePath);
-
-                        if (DEBUG)
-                            Log.d(TAG, ">>>> song info: " + artist + ", " + title + ", " + album + ", " + duration + ", " + artistId + ", " + albumId);
-
+                        readMp3MetaData(file);
                     }
                 }
             }
+        }
+    }
+
+    private void readMp3MetaData(File file) {
+        try {
+            String filePath = file.getAbsolutePath();
+
+            MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+            mmr.setDataSource(filePath);
+
+            String duration = Util.ensureNotNull(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION), "");
+
+            int intDuration = 0;
+            if (duration != null && duration.length() > 0)
+                intDuration = Integer.parseInt(duration);
+
+            if (intDuration == 0)
+                return;
+
+            String title = Util.ensureNotNull(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE), file.getName());
+            String artist = Util.ensureNotNull(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST), "");
+            String album = Util.ensureNotNull(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM), "");
+
+            int albumId = 0;
+            int artistId = 0;
+            if (!album.equals(""))
+                albumId = mMusicPlayerDAO.addAlbum(album);
+            if (!artist.equals(""))
+                artistId = mMusicPlayerDAO.addArtist(artist);
+
+            mMusicPlayerDAO.addSong(title, artistId, artist, albumId, album, intDuration, filePath);
+
+            if (DEBUG)
+                Log.d(TAG, ">>>> song info: " + artist + ", " + title + ", " + album + ", " + duration + ", " + artistId + ", " + albumId);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
