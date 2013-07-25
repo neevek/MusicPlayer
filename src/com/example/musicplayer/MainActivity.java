@@ -71,7 +71,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     public final static int TYPE_BY_ARTIST = 1;
     public final static int TYPE_BY_ALBUM = 2;
 
-    private final static int DIALOG_ABOUT_ID = 1;
+    private final static int DIALOG_EXIT_ID = 1;
 
     @Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -231,10 +231,9 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                 });
                 break;
             case R.id.action_quit:
-                finish();
+                showDialog(DIALOG_EXIT_ID);
                 return true;
             case R.id.action_about:
-//                showDialog(DIALOG_ABOUT_ID);
                 Intent intent = new Intent(this, AboutActivity.class);
                 startActivity(intent);
                 break;
@@ -245,12 +244,19 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     @Override
     protected Dialog onCreateDialog(int id) {
         switch (id) {
-            case DIALOG_ABOUT_ID:
+            case DIALOG_EXIT_ID:
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("关于")
-                        .setMessage("This music player is a proof of concept demonstration made by @neevek in July, 2013.")
+                builder.setTitle("退出")
+                        .setMessage("确定退出音乐播放器吗?")
                         .setCancelable(true)
                         .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                                finish();
+                            }
+                        })
+                        .setNegativeButton("取消", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 dialog.dismiss();
@@ -266,7 +272,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		switch (keyCode) {
 		case KeyEvent.KEYCODE_BACK:
-			break;
+            showDialog(DIALOG_EXIT_ID);
+            return true;
 		}
 		return super.onKeyDown(keyCode, event);
 	}

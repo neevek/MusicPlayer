@@ -10,6 +10,6 @@
     <string name="action_quit">退出</string>
 
     <string name="title_about">关于</string>
-    <string name="about_desc">Designed &amp; Developed By @neevek\nJuly, 2013</string>
+    <string name="about_desc">This music player is a proof of concept demonstration\ndesigned &amp; developed by @neevek\nJuly, 2013</string>
 
 </resources>
