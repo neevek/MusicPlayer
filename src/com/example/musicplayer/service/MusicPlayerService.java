@@ -189,18 +189,20 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
     @Override
     public void onCompletion(MediaPlayer mp) {
         List<Song> playList = mApp.getCurrentPlayList();
-        int songIndex = playList.indexOf(mCurrentSong);
-        if (songIndex == -1 || songIndex == playList.size() - 1) {
-            mp.stop();
-            getSharedPreferences(MusicPlayerApplication.SHARED_PREF, MODE_PRIVATE).edit()
-                    .remove(MusicPlayerApplication.PREF_KEY_LAST_PLAYED_SONG_PROGRESS)
-                    .commit();
+        if (playList != null) {
+            int songIndex = playList.indexOf(mCurrentSong);
+            if (songIndex == -1 || songIndex == playList.size() - 1) {
+                mp.stop();
+                getSharedPreferences(MusicPlayerApplication.SHARED_PREF, MODE_PRIVATE).edit()
+                        .remove(MusicPlayerApplication.PREF_KEY_LAST_PLAYED_SONG_PROGRESS)
+                        .commit();
 
-            stopForeground(true);
+                stopForeground(true);
 
-            mMessageePump.broadcastMessage(Message.Type.ON_PAUSE_PLAYBACK, mCurrentSong);
-        } else {
-            playNextSong();
+                mMessageePump.broadcastMessage(Message.Type.ON_PAUSE_PLAYBACK, mCurrentSong);
+            } else {
+                playNextSong();
+            }
         }
     }
 
@@ -374,9 +376,13 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
     }
 
     public static class MediaButtonBroadcastReceiver extends BroadcastReceiver {
-        private static long mFirstActionDownTime = 0;
-        private static long mLastUpTime= 0;
-        private static boolean mHandledLongPress = false;
+        private static long mLastActionDownTimestampForLongPressing = 0;
+
+        private static long mFirstActionDownTimestamp = 0;
+        private static long mLastActionUpTimestamp = 0;
+
+        private final static int LONG_PRESS_THRESHOLD = 500;
+        private final static int NON_DUPLICATE_PRESS_THRESHOLD = 500;
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -384,39 +390,65 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
                 KeyEvent event = intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
                 int keyCode = event.getKeyCode();
 
-                if (KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE == keyCode || event.getKeyCode() == keyCode) {
-                    int action = event.getAction();
-
-                    if (action == KeyEvent.ACTION_DOWN) {
-                        if (mFirstActionDownTime == 0)
-                            mFirstActionDownTime = event.getDownTime();
-                    } else if (action == KeyEvent.ACTION_UP) {
-                        if (mLastUpTime == 0 || event.getEventTime() - mLastUpTime > 500) {
-                            if (event.getEventTime() - mFirstActionDownTime >= 800) {
-                                handleNormalPress();
-                                if (DEBUG) Log.d(TAG, ">>>> media button long press");
-                            } else {
-                                handleLongPress();
-                                if (DEBUG) Log.d(TAG, ">>>> media button normal press");
-                            }
-                        }
-
-                        mFirstActionDownTime = 0;
-                        mLastUpTime = event.getEventTime();
-                    }
+                if (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE || keyCode == KeyEvent.KEYCODE_HEADSETHOOK) {
+                    handleKeyPress(event);
+                } else if (keyCode == KeyEvent.KEYCODE_MEDIA_NEXT) {
 
                 }
             }
         }
 
-        private void handleLongPress () {
-            MusicPlayerService musicPlayerService = mMusicPlayerServiceRef.get();
-            if (musicPlayerService != null) {
-                musicPlayerService.playNextSong();
+        private void handleKeyPress(KeyEvent event) {
+            int action = event.getAction();
+
+            if (action == KeyEvent.ACTION_DOWN) {
+                long actionDownTime = event.getDownTime();
+                if (actionDownTime != mFirstActionDownTimestamp)
+                    mFirstActionDownTimestamp = actionDownTime;
+
+                if (mFirstActionDownTimestamp != mLastActionDownTimestampForLongPressing) {
+                    if (reachLongPressThreshold(event)) {
+                        int keyCode = event.getKeyCode();
+                        switch (keyCode) {
+                            case KeyEvent.KEYCODE_HEADSETHOOK:
+                            case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
+                                handlePlayAndPausePress();
+                                break;
+                        }
+                        mLastActionDownTimestampForLongPressing = mFirstActionDownTimestamp;
+                    }
+                }
+            } else if (action == KeyEvent.ACTION_UP) {
+                if (mFirstActionDownTimestamp != mLastActionDownTimestampForLongPressing) {
+                    if (isActionUpValid(event)) {
+                        int keyCode = event.getKeyCode();
+                        switch (keyCode) {
+                            case KeyEvent.KEYCODE_HEADSETHOOK:
+                            case KeyEvent.KEYCODE_MEDIA_NEXT:
+                                handleMediaNextPress();
+                                break;
+                            case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
+                                handleMediaPrevPress();
+                                break;
+                            case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
+                                handlePlayAndPausePress();
+                        }
+                    }
+
+                    mLastActionUpTimestamp = event.getEventTime();
+                }
             }
         }
 
-        private void handleNormalPress () {
+        private boolean reachLongPressThreshold(KeyEvent event) {
+            return event.getEventTime() - mFirstActionDownTimestamp >= LONG_PRESS_THRESHOLD;
+        }
+
+        private boolean isActionUpValid(KeyEvent event) {
+            return event.getEventTime() - mLastActionUpTimestamp > NON_DUPLICATE_PRESS_THRESHOLD;
+        }
+
+        private void handlePlayAndPausePress() {
             MusicPlayerService musicPlayerService = mMusicPlayerServiceRef.get();
             if (musicPlayerService != null) {
                 if (musicPlayerService.isPlaying())
@@ -424,6 +456,23 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
                 else
                     musicPlayerService.resumePlayback();
             }
+            if (DEBUG) Log.d(TAG, ">>>> media button PLAY/PAUSE pressed.");
+        }
+
+        private void handleMediaNextPress() {
+            MusicPlayerService musicPlayerService = mMusicPlayerServiceRef.get();
+            if (musicPlayerService != null) {
+                musicPlayerService.playNextSong();
+            }
+            if (DEBUG) Log.d(TAG, ">>>> media button NEXT pressed.");
+        }
+
+        private void handleMediaPrevPress() {
+            MusicPlayerService musicPlayerService = mMusicPlayerServiceRef.get();
+            if (musicPlayerService != null) {
+                musicPlayerService.playPrevSong();
+            }
+            if (DEBUG) Log.d(TAG, ">>>> media button PREVIOUS pressed.");
         }
     }
 }
