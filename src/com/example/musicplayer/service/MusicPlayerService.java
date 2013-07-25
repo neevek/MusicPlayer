@@ -414,14 +414,24 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
                             case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
                                 handlePlayAndPausePress();
                                 break;
+                            case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
+                                // volume up
+                                break;
+                            case KeyEvent.KEYCODE_MEDIA_NEXT:
+                                // volume down
+                                break;
                         }
                         mLastActionDownTimestampForLongPressing = mFirstActionDownTimestamp;
                     }
                 }
             } else if (action == KeyEvent.ACTION_UP) {
                 if (mFirstActionDownTimestamp != mLastActionDownTimestampForLongPressing) {
-                    if (isActionUpValid(event)) {
-                        int keyCode = event.getKeyCode();
+                    int keyCode = event.getKeyCode();
+                    if (reachLongPressThreshold(event) && (keyCode == KeyEvent.KEYCODE_HEADSETHOOK || keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)) {
+                        // a long press
+                        handlePlayAndPausePress();
+                        mLastActionDownTimestampForLongPressing = mFirstActionDownTimestamp;
+                    } else if (isActionUpValid(event)) {
                         switch (keyCode) {
                             case KeyEvent.KEYCODE_HEADSETHOOK:
                             case KeyEvent.KEYCODE_MEDIA_NEXT:
