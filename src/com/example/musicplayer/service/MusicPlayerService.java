@@ -59,6 +59,7 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
     private boolean mMediaPlayerPrepared;
 
     private ComponentName mMediaButtonBroadcastReceiverComponentName;
+    private HeadsetBroadcastReceiver mHeadsetBroadcastReceiver;
 
     private static WeakReference<MusicPlayerService> mMusicPlayerServiceRef;
 
@@ -98,6 +99,10 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
 
         mMediaButtonBroadcastReceiverComponentName = new ComponentName(this, MediaButtonBroadcastReceiver.class);
         ((AudioManager) getSystemService(AUDIO_SERVICE)).registerMediaButtonEventReceiver(mMediaButtonBroadcastReceiverComponentName);
+
+        mHeadsetBroadcastReceiver = new HeadsetBroadcastReceiver();
+        IntentFilter intentFilter = new IntentFilter(Intent.ACTION_HEADSET_PLUG);
+        registerReceiver(mHeadsetBroadcastReceiver, intentFilter);
     }
 
     @Override
@@ -170,6 +175,7 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
 
         mMusicPlayerServiceRef.clear();
 
+        unregisterReceiver(mHeadsetBroadcastReceiver);
         ((AudioManager) getSystemService(AUDIO_SERVICE)).unregisterMediaButtonEventReceiver(mMediaButtonBroadcastReceiverComponentName);
         mTelephonyManager.listen(null, 0);
 
@@ -375,6 +381,32 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
         }
     }
 
+    public static class HeadsetBroadcastReceiver extends BroadcastReceiver {
+        private static boolean mPausedByHeadsetUnplug = false;
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int state = intent.getIntExtra("state", 0);
+            handleUnplugHeadset(state == 0);
+            abortBroadcast();
+        }
+
+        private void handleUnplugHeadset (boolean unplugged) {
+            MusicPlayerService musicPlayerService = mMusicPlayerServiceRef.get();
+            if (musicPlayerService != null) {
+                if (unplugged) {
+                    if (musicPlayerService.isPlaying()) {
+                        musicPlayerService.pausePlayback();
+                        mPausedByHeadsetUnplug = true;
+                    }
+                } else if (mPausedByHeadsetUnplug) {
+                    musicPlayerService.resumePlayback();
+                    mPausedByHeadsetUnplug = false;
+                }
+            }
+            if (DEBUG) Log.d(TAG, ">>>> headset unplugged: " + unplugged);
+        }
+    }
+
     public static class MediaButtonBroadcastReceiver extends BroadcastReceiver {
         private static long mLastActionDownTimestampForLongPressing = 0;
 
@@ -388,14 +420,9 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
         public void onReceive(Context context, Intent intent) {
             if (Intent.ACTION_MEDIA_BUTTON.equals(intent.getAction())) {
                 KeyEvent event = intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
-                int keyCode = event.getKeyCode();
-
-                if (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE || keyCode == KeyEvent.KEYCODE_HEADSETHOOK) {
-                    handleKeyPress(event);
-                } else if (keyCode == KeyEvent.KEYCODE_MEDIA_NEXT) {
-
-                }
+                handleKeyPress(event);
             }
+            abortBroadcast();
         }
 
         private void handleKeyPress(KeyEvent event) {
