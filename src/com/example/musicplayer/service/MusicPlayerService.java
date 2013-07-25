@@ -33,7 +33,7 @@ import java.util.List;
  * Date: 7/20/13
  * Time: 5:58 PM
  */
-public class MusicPlayerService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener {
+public class MusicPlayerService extends Service implements MediaPlayer.OnCompletionListener {
     private final static boolean DEBUG = true;
     private final static String TAG = MusicPlayerService.class.getSimpleName();
 
@@ -56,8 +56,6 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
     private TelephonyManager mTelephonyManager;
     private boolean mStoppedByPhoneCalls;
 
-    private boolean mMediaPlayerPrepared;
-
     private ComponentName mMediaButtonBroadcastReceiverComponentName;
     private HeadsetBroadcastReceiver mHeadsetBroadcastReceiver;
 
@@ -76,7 +74,6 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
         mMediaPlayer = new MediaPlayer();
         mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         mMediaPlayer.setOnCompletionListener(this);
-        mMediaPlayer.setOnPreparedListener(this);
 
         mMessageePump = mApp.getMessagePump();
 
@@ -185,11 +182,6 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
         mMediaPlayer.release();
 
         stopForeground(true);
-    }
-
-    @Override
-    public void onPrepared(MediaPlayer mediaPlayer) {
-        mMediaPlayerPrepared = true;
     }
 
     @Override
@@ -309,7 +301,12 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
     }
 
     public boolean isPlaying() {
-        return mMediaPlayerPrepared && mMediaPlayer.isPlaying();
+        try {
+            return mMediaPlayer.isPlaying();
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     public int getPlayingProgress () {
@@ -412,23 +409,36 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
 
         private static long mFirstActionDownTimestamp = 0;
         private static long mLastActionUpTimestamp = 0;
+        private static long mDuringPhoneCallActionDownTime = 0;
 
         private final static int LONG_PRESS_THRESHOLD = 500;
         private final static int NON_DUPLICATE_PRESS_THRESHOLD = 500;
 
+
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (Intent.ACTION_MEDIA_BUTTON.equals(intent.getAction())) {
+            TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(TELEPHONY_SERVICE);
+            if (telephonyManager.getCallState() == TelephonyManager.CALL_STATE_IDLE) {
+                if (Intent.ACTION_MEDIA_BUTTON.equals(intent.getAction())) {
+                    KeyEvent event = intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
+                    handleKeyPress(event);
+                }
+            } else if (mDuringPhoneCallActionDownTime == 0) {
                 KeyEvent event = intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
-                handleKeyPress(event);
+                mDuringPhoneCallActionDownTime = event.getDownTime();
             }
-            abortBroadcast();
         }
 
         private void handleKeyPress(KeyEvent event) {
             int action = event.getAction();
 
             if (action == KeyEvent.ACTION_DOWN) {
+                if (mDuringPhoneCallActionDownTime == event.getDownTime()) {
+                    return;
+                } else if (mDuringPhoneCallActionDownTime > 0) {
+                    mDuringPhoneCallActionDownTime = 0;
+                }
+
                 long actionDownTime = event.getDownTime();
                 if (actionDownTime != mFirstActionDownTimestamp)
                     mFirstActionDownTimestamp = actionDownTime;
@@ -452,6 +462,10 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnPrepare
                     }
                 }
             } else if (action == KeyEvent.ACTION_UP) {
+                if (mDuringPhoneCallActionDownTime == event.getDownTime()) {
+                    return;
+                }
+
                 if (mFirstActionDownTimestamp != mLastActionDownTimestampForLongPressing) {
                     int keyCode = event.getKeyCode();
                     if (reachLongPressThreshold(event) && (keyCode == KeyEvent.KEYCODE_HEADSETHOOK || keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)) {
