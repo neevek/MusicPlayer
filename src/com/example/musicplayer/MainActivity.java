@@ -234,7 +234,9 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                 finish();
                 return true;
             case R.id.action_about:
-                showDialog(DIALOG_ABOUT_ID);
+//                showDialog(DIALOG_ABOUT_ID);
+                Intent intent = new Intent(this, AboutActivity.class);
+                startActivity(intent);
                 break;
 		}
 		return super.onOptionsItemSelected(item);

@@ -2,6 +2,7 @@
 <resources>
     <color name="black">#ff000000</color>
     <color name="gray">#ff999999</color>
+    <color name="background">#ffeeeeee</color>
 
     <drawable name="list_normal">#66cccccc</drawable>
     <drawable name="list_pressed">#cccccccc</drawable>
